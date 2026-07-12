@@ -98,10 +98,9 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!token) return null;
 
   try {
-    const data = await request<any>("/me");
-    // Backend may wrap in { data: user } or return user directly
-    const raw = data?.data ?? data;
-    return normalizeUser(raw);
+    // request() auto-unwraps { data: {...} } → the user object directly
+    const user = await request<any>("/me");
+    return normalizeUser(user);
   } catch (_error) {
     const userStr = localStorage.getItem("transitops_auth_user");
     const parsed = userStr ? JSON.parse(userStr) : null;
