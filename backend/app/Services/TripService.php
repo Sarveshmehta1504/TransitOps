@@ -90,6 +90,14 @@ class TripService
 
     public function deleteTrip(Trip $trip): bool
     {
+        if ($trip->status === Trip::STATUS_DISPATCHED) {
+            throw new BusinessRuleException('Dispatched trips cannot be deleted.');
+        }
+
+        if ($trip->status === Trip::STATUS_COMPLETED) {
+            throw new BusinessRuleException('Completed trips cannot be deleted.');
+        }
+
         return DB::transaction(static fn (): bool => (bool) $trip->delete());
     }
 
