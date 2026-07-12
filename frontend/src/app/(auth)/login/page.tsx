@@ -28,11 +28,11 @@ const ROLE_CONFIG = [
     icon: Truck,
     access: "Fleet, Drivers, Maintenance, Analytics",
     color: "from-blue-600/20 to-blue-600/5 border-blue-500/30 hover:border-blue-500/60",
-    lightColor: "from-blue-50 to-white border-blue-200 hover:border-blue-300",
+    lightColor: "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm",
     activeColor: "from-blue-600/30 to-blue-600/10 border-blue-500 shadow-blue-500/20",
-    lightActiveColor: "from-blue-100 to-blue-50 border-blue-400 shadow-md shadow-blue-500/10",
+    lightActiveColor: "bg-blue-50 border-blue-500 shadow-sm shadow-blue-500/10 ring-1 ring-blue-500/50",
     iconColor: "text-blue-400",
-    lightIconColor: "text-blue-600",
+    lightIconColor: "text-blue-700",
   },
   {
     role: "Dispatcher" as UserRole,
@@ -40,11 +40,11 @@ const ROLE_CONFIG = [
     icon: Compass,
     access: "Fleet (view), Trips",
     color: "from-indigo-600/20 to-indigo-600/5 border-indigo-500/30 hover:border-indigo-500/60",
-    lightColor: "from-indigo-50 to-white border-indigo-200 hover:border-indigo-300",
+    lightColor: "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm",
     activeColor: "from-indigo-600/30 to-indigo-600/10 border-indigo-500 shadow-indigo-500/20",
-    lightActiveColor: "from-indigo-100 to-indigo-50 border-indigo-400 shadow-md shadow-indigo-500/10",
+    lightActiveColor: "bg-indigo-50 border-indigo-500 shadow-sm shadow-indigo-500/10 ring-1 ring-indigo-500/50",
     iconColor: "text-indigo-400",
-    lightIconColor: "text-indigo-600",
+    lightIconColor: "text-indigo-700",
   },
   {
     role: "Safety Officer" as UserRole,
@@ -52,11 +52,11 @@ const ROLE_CONFIG = [
     icon: Users,
     access: "Drivers, Trips (view)",
     color: "from-amber-600/20 to-amber-600/5 border-amber-500/30 hover:border-amber-500/60",
-    lightColor: "from-amber-50 to-white border-amber-200 hover:border-amber-300",
+    lightColor: "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm",
     activeColor: "from-amber-600/30 to-amber-600/10 border-amber-500 shadow-amber-500/20",
-    lightActiveColor: "from-amber-100 to-amber-50 border-amber-400 shadow-md shadow-amber-500/10",
+    lightActiveColor: "bg-amber-50 border-amber-500 shadow-sm shadow-amber-500/10 ring-1 ring-amber-500/50",
     iconColor: "text-amber-400",
-    lightIconColor: "text-amber-600",
+    lightIconColor: "text-amber-700",
   },
   {
     role: "Financial Analyst" as UserRole,
@@ -64,11 +64,11 @@ const ROLE_CONFIG = [
     icon: BarChart3,
     access: "Fleet (view), Fuel & Expenses, Analytics",
     color: "from-emerald-600/20 to-emerald-600/5 border-emerald-500/30 hover:border-emerald-500/60",
-    lightColor: "from-emerald-50 to-white border-emerald-200 hover:border-emerald-300",
+    lightColor: "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm",
     activeColor: "from-emerald-600/30 to-emerald-600/10 border-emerald-500 shadow-emerald-500/20",
-    lightActiveColor: "from-emerald-100 to-emerald-50 border-emerald-400 shadow-md shadow-emerald-500/10",
+    lightActiveColor: "bg-emerald-50 border-emerald-500 shadow-sm shadow-emerald-500/10 ring-1 ring-emerald-500/50",
     iconColor: "text-emerald-400",
-    lightIconColor: "text-emerald-600",
+    lightIconColor: "text-emerald-700",
   },
 ];
 
@@ -189,10 +189,10 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => handleSelectRole(rc.role, rc.email)}
                   disabled={isLocked}
-                  className={`w-full text-left p-4 rounded-2xl border bg-gradient-to-r transition-all duration-200 group ${
+                  className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 group ${
                     isActive
-                      ? isLight ? rc.lightActiveColor : rc.activeColor
-                      : isLight ? rc.lightColor : rc.color
+                      ? isLight ? rc.lightActiveColor : `bg-gradient-to-r ${rc.activeColor}`
+                      : isLight ? rc.lightColor : `bg-gradient-to-r ${rc.color}`
                   }`}
                 >
                   <div className="flex items-center gap-3">

@@ -120,10 +120,8 @@ body {
 [data-theme="light"] .text-slate-100,
 [data-theme="light"] .text-slate-200 { color: #0f172a !important; }
 [data-theme="light"] .text-slate-300 { color: #1e293b !important; }
-[data-theme="light"] .text-slate-400 { color: #475569 !important; }
-[data-theme="light"] .text-slate-500 { color: #64748b !important; }
-[data-theme="light"] .text-slate-600 { color: #94a3b8 !important; }
-[data-theme="light"] .text-slate-700 { color: #cbd5e1 !important; }
+[data-theme="light"] .text-slate-400 { color: #334155 !important; }
+[data-theme="light"] .text-slate-500 { color: #475569 !important; }
 [data-theme="light"] .text-white { color: #0f172a !important; }
 
 /* Hover states */
@@ -131,9 +129,9 @@ body {
 [data-theme="light"] .hover\:bg-slate-800:hover { background-color: #e2e8f0 !important; }
 [data-theme="light"] .hover\:text-slate-200:hover { color: #0f172a !important; }
 
-/* Cards/panels — give them a white surface with a subtle shadow */
-[data-theme="light"] .rounded-2xl.border,
-[data-theme="light"] .rounded-xl.border {
+/* Dashboard Cards/panels — give them a white surface with a subtle shadow */
+[data-theme="light"] .bg-slate-900\/50,
+[data-theme="light"] .bg-slate-950\/50 {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04) !important;
@@ -154,13 +152,10 @@ body {
 [data-theme="light"] .bg-indigo-600 * { color: #ffffff !important; }
 
 /* Fix gradient text (like "Dashboard" page titles) in light mode */
-[data-theme="light"] .from-white {
-  --tw-gradient-from: #0f172a var(--tw-gradient-from-position);
-  --tw-gradient-to: rgba(15, 23, 42, 0) var(--tw-gradient-to-position);
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
-}
-[data-theme="light"] .to-slate-400 {
-  --tw-gradient-to: #475569 var(--tw-gradient-to-position);
+[data-theme="light"] .bg-clip-text.text-transparent {
+  background: none !important;
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
 }
 
 /* ── Scrollbar ── */
