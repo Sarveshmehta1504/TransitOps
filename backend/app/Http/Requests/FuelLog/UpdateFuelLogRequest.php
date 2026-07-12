@@ -18,10 +18,6 @@ class UpdateFuelLogRequest extends FormRequest
 
             'trip_id' => 'nullable|exists:trips,id',
 
-            'fuel_station' => 'required|string|max:255',
-
-            'fuel_type' => 'required|in:Diesel,Petrol,CNG,Electric',
-
             'quantity' => 'required|numeric|min:0.01',
 
             'price_per_liter' => 'required|numeric|min:0',

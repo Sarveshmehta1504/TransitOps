@@ -30,8 +30,6 @@ class UpdateMaintenanceRequest extends FormRequest
 
             'end_date' => 'nullable|date|after_or_equal:start_date',
 
-            'next_service_date' => 'nullable|date|after_or_equal:start_date',
-
             'status' => 'required|in:scheduled,in_progress,completed,cancelled',
 
             'remarks' => 'nullable|string',

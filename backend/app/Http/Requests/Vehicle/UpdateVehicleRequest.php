@@ -22,7 +22,7 @@ class UpdateVehicleRequest extends FormRequest
                  'max:255',
                 Rule::unique('vehicles', 'registration_number')
                 ->ignore($vehicleId),
-                ],
+            ],
             'name' => 'required|string|max:255',
             'type' => 'required|string|max:100',
             'max_load_capacity' => 'required|numeric|min:1',

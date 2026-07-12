@@ -26,7 +26,7 @@ class StoreMaintenanceRequest extends FormRequest
 
             'start_date' => 'required|date',
 
-            'status' => 'required|enum:scheduled,in_progress,completed,cancelled',
+            'status' => 'required|enum:scheduled',
 
             'remarks' => 'nullable|string',
         ];
