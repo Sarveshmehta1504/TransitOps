@@ -17,8 +17,6 @@ class StoreTripRequest extends FormRequest
             'vehicle_id' => 'required|exists:vehicles,id',
             'driver_id' => 'required|exists:drivers,id',
 
-            'trip_number' => 'required|string|unique:trips,trip_number',
-
             'source' => 'required|string|max:255',
             'destination' => 'required|string|max:255',
 
@@ -26,7 +24,6 @@ class StoreTripRequest extends FormRequest
 
             'planned_distance' => 'required|numeric|min:0',
             'starting_odometer' => 'required|numeric|min:0',
-            'status' => 'required|in:draft',
 
             'remarks' => 'nullable|string',
         ];

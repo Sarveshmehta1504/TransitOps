@@ -24,7 +24,7 @@ class UpdateFuelLogRequest extends FormRequest
 
             'odometer_reading' => 'required|numeric|min:0',
 
-            'fuel_date' => 'required|date',
+            'fuel_date' => 'required|date:before_or_equal:today',
 
             'remarks' => 'nullable|string',
         ];

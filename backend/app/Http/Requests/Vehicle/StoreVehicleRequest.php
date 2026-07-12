@@ -20,7 +20,6 @@ class StoreVehicleRequest extends FormRequest
             'max_load_capacity' => 'required|numeric|min:1',
             'odometer' => 'required|numeric|min:0',
             'acquisition_cost' => 'required|numeric|min:0',
-            'status' => 'required|in:available,in_shop',
         ];
     }
 }
