@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\BusinessRuleException;
 use App\Services\ReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -60,12 +61,20 @@ class ReportController extends Controller
         try {
             return response()->json([
                 'success' => true,
+                'status' => 200,
                 'message' => 'Report generated successfully',
                 'data' => $callback(),
-            ]);
+            ], 200);
+        } catch (BusinessRuleException) {
+            return response()->json([
+                'success' => false,
+                'status' => 403,
+                'message' => 'Unable to generate report',
+            ], 403);
         } catch (Throwable) {
             return response()->json([
                 'success' => false,
+                'status' => 500,
                 'message' => 'Unable to generate report',
             ], 500);
         }
