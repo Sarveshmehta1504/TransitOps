@@ -156,11 +156,11 @@ class ReportService
 
     public function financialReport(): array
     {
-        $fuel = FuelLog::sum('total_cost');
+        $fuel = (float) FuelLog::sum('total_cost');
 
-        $expense = Expense::sum('amount');
+        $expense = (float) Expense::sum('amount');
 
-        $maintenance = MaintenanceLog::sum('cost');
+        $maintenance = (float) MaintenanceLog::sum('cost');
 
         return [
 
@@ -194,12 +194,12 @@ class ReportService
             'completed_trips' => Trip::where('status', Trip::STATUS_COMPLETED)->count(),
 
             'average_trip_distance' => round(
-                (float)(Trip::avg('actual_distance') ?? 0),
+                (float) Trip::avg('actual_distance') ?? 0,
                 2
             ),
 
             'average_fuel_consumption' => round(
-                (float)(FuelLog::avg('quantity') ?? 0),
+                (float) FuelLog::avg('quantity') ?? 0,
                 2
             ),
         ];

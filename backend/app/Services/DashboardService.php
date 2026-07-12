@@ -101,11 +101,11 @@ class DashboardService
 
     public function getFinancialStatistics(): array
     {
-        $fuel = FuelLog::sum('total_cost');
+        $fuel = (float) FuelLog::sum('total_cost');
 
-        $expense = Expense::sum('amount');
+        $expense = (float) Expense::sum('amount');
 
-        $maintenance = MaintenanceLog::sum('cost');
+        $maintenance = (float) MaintenanceLog::sum('cost');
 
         return [
 
@@ -169,13 +169,8 @@ class DashboardService
 
     public function getMonthlyExpenseChart()
     {
-        $driver = \DB::connection()->getDriverName();
-        $select = $driver === 'sqlite' 
-            ? 'strftime("%m", expense_date) as month, SUM(amount) as total' 
-            : 'MONTH(expense_date) as month, SUM(amount) as total';
-
         return Expense::query()
-            ->selectRaw($select)
+            ->selectRaw('MONTH(expense_date) as month, SUM(amount) as total')
             ->groupBy('month')
             ->orderBy('month')
             ->get();
@@ -183,13 +178,8 @@ class DashboardService
 
     public function getMonthlyFuelChart()
     {
-        $driver = \DB::connection()->getDriverName();
-        $select = $driver === 'sqlite' 
-            ? 'strftime("%m", fuel_date) as month, SUM(total_cost) as total' 
-            : 'MONTH(fuel_date) as month, SUM(total_cost) as total';
-
         return FuelLog::query()
-            ->selectRaw($select)
+            ->selectRaw('MONTH(fuel_date) as month, SUM(total_cost) as total')
             ->groupBy('month')
             ->orderBy('month')
             ->get();
