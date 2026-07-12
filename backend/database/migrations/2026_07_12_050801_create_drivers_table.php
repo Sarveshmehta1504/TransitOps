@@ -13,19 +13,33 @@ return new class extends Migration
     {
         Schema::create('drivers', function (Blueprint $table) {
             $table->id();
+
             $table->string('name');
+
             $table->string('license_number')->unique();
+
             $table->string('license_category');
+
             $table->date('license_expiry');
+
             $table->string('contact_number');
+
+            $table->string('email')->nullable()->unique();
+
+            $table->text('address')->nullable();
+
+            $table->date('date_of_birth');
+
+            $table->date('joining_date');
+
             $table->integer('safety_score')->default(100);
 
-            $table->enum('status',[
+            $table->enum('status', [
                 'available',
                 'on_trip',
                 'off_duty',
-                'suspended'
-            ]);
+                'suspended',
+            ])->default('available');
 
             $table->timestamps();
         });

@@ -16,15 +16,15 @@ return new class extends Migration
             $table->string('registration_number')->unique();
             $table->string('name');
             $table->string('type');
-            $table->decimal('max_load_capacity');
-            $table->decimal('odometer')->default(0);
-            $table->decimal('acquisition_cost');
-            $table->enum('status',[
+            $table->decimal('max_load_capacity', 10, 2);
+            $table->decimal('odometer', 12, 2)->default(0);
+            $table->decimal('acquisition_cost', 12, 2);
+            $table->enum('status', [
                 'available',
                 'on_trip',
                 'in_shop',
-                'retired'
-            ]);
+                'retired',
+            ])->default('available');
             $table->timestamps();
         });
     }

@@ -12,16 +12,33 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('fuel_logs', function (Blueprint $table) {
+
             $table->id();
 
-            $table->foreignId('vehicle_id');
+            $table->foreignId('vehicle_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-            $table->decimal('liters');
-            $table->decimal('cost');
+            $table->foreignId('trip_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
 
-            $table->date('fuel_date');
+            $table->decimal('quantity',10,2);
+
+            $table->decimal('price_per_liter',10,2);
+
+            $table->decimal('total_cost',12,2);
+
+            $table->decimal('odometer_reading',12,2);
+
+            $table->timestamp('fuel_date');
+
+            $table->text('remarks')
+                ->nullable();
 
             $table->timestamps();
+
         });
     }
 

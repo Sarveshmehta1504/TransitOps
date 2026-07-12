@@ -12,26 +12,53 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('trips', function (Blueprint $table) {
+
             $table->id();
 
-            $table->foreignId('vehicle_id');
-            $table->foreignId('driver_id');
+            $table->foreignId('vehicle_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->foreignId('driver_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->string('trip_number')->unique();
 
             $table->string('source');
+
             $table->string('destination');
 
-            $table->decimal('cargo_weight');
-            $table->decimal('planned_distance');
+            $table->decimal('cargo_weight', 10, 2);
 
-            $table->decimal('final_odometer')->nullable();
-            $table->decimal('fuel_consumed')->nullable();
+            $table->decimal('planned_distance', 10, 2);
 
-            $table->enum('status',[
+            $table->decimal('actual_distance', 10, 2)
+                ->nullable();
+
+            $table->decimal('starting_odometer', 12, 2);
+
+            $table->decimal('ending_odometer', 12, 2)
+                ->nullable();
+
+            $table->decimal('fuel_consumed', 10, 2)
+                ->nullable();
+
+            $table->timestamp('start_time')
+                ->nullable();
+
+            $table->timestamp('end_time')
+                ->nullable();
+
+            $table->enum('status', [
                 'draft',
                 'dispatched',
                 'completed',
-                'cancelled'
-            ]);
+                'cancelled',
+            ])->default('draft');
+
+            $table->text('remarks')
+                ->nullable();
 
             $table->timestamps();
         });
