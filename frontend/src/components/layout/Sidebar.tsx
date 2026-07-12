@@ -89,8 +89,10 @@ export default function Sidebar() {
       <div className="p-4 border-t border-slate-900 flex flex-col gap-3">
         {user && (
           <div className="flex items-center gap-3 px-2">
-            <div className="h-9 w-9 rounded-lg bg-indigo-950 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 text-sm shrink-0">
-              {user.name.charAt(0)}
+            <div className="h-9 w-9 rounded-xl bg-indigo-600/15 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 text-xs shrink-0 select-none">
+              {user.name === "Raven K."
+                ? "RK"
+                : user.name.split(" ").map((n: string) => n[0]).join("")}
             </div>
             <div className="overflow-hidden">
               <p className="text-sm font-semibold text-slate-200 truncate">{user.name}</p>
