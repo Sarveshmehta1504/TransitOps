@@ -93,34 +93,19 @@ export default function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 select-none group",
                 isActive
-                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/10"
-                  : "hover:text-slate-200"
+                  ? isLight
+                    ? "bg-indigo-100 text-indigo-700 shadow-md shadow-indigo-100/50"
+                    : "bg-indigo-600 text-white shadow-lg shadow-indigo-600/10"
+                  : isLight
+                    ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
               )}
-              style={
-                !isActive
-                  ? {
-                      color: "var(--text-secondary)",
-                    }
-                  : undefined
-              }
-              onMouseEnter={(e) => {
-                if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.background =
-                    "var(--sidebar-item-hover)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!isActive) {
-                  (e.currentTarget as HTMLElement).style.background = "";
-                }
-              }}
             >
               <item.icon
                 className={cn(
                   "h-5 w-5 shrink-0 transition-transform group-hover:scale-105",
-                  isActive ? "text-white" : ""
+                  isActive ? (isLight ? "text-indigo-700" : "text-white") : ""
                 )}
-                style={!isActive ? { color: "var(--text-muted)" } : undefined}
               />
               <span>{item.label}</span>
             </Link>

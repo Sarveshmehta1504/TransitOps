@@ -153,7 +153,15 @@ body {
 [data-theme="light"] .bg-indigo-600 { color: #ffffff !important; }
 [data-theme="light"] .bg-indigo-600 * { color: #ffffff !important; }
 
-
+/* Fix gradient text (like "Dashboard" page titles) in light mode */
+[data-theme="light"] .from-white {
+  --tw-gradient-from: #0f172a var(--tw-gradient-from-position);
+  --tw-gradient-to: rgba(15, 23, 42, 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+[data-theme="light"] .to-slate-400 {
+  --tw-gradient-to: #475569 var(--tw-gradient-to-position);
+}
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
