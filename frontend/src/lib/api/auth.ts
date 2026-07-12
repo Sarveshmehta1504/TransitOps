@@ -2,19 +2,23 @@ import { request } from "./client";
 import { User, UserRole } from "@/types/user";
 
 export const MOCK_USERS: User[] = [
-  { id: 1, name: "Marcus Vance", email: "manager@transitops.in", role: "Fleet Manager", created_at: "2025-01-10", updated_at: "2025-01-10" },
-  { id: 2, name: "Raven K.", email: "Raven.k@transitops.in", role: "Dispatcher", created_at: "2025-02-14", updated_at: "2025-02-14" },
-  { id: 3, name: "Dominic Torres", email: "safety@transitops.in", role: "Safety Officer", created_at: "2025-03-01", updated_at: "2025-03-01" },
-  { id: 4, name: "Clara Oswald", email: "analyst@transitops.in", role: "Financial Analyst", created_at: "2024-08-20", updated_at: "2024-08-20" },
+  { id: 1, name: "Marcus Vance", email: "fleet@transitops.com", role: "Fleet Manager", created_at: "2025-01-10", updated_at: "2025-01-10" },
+  { id: 2, name: "Raven K.", email: "dispatcher@transitops.com", role: "Dispatcher", created_at: "2025-02-14", updated_at: "2025-02-14" },
+  { id: 3, name: "Dominic Torres", email: "safety@transitops.com", role: "Safety Officer", created_at: "2025-03-01", updated_at: "2025-03-01" },
+  { id: 4, name: "Clara Oswald", email: "finance@transitops.com", role: "Financial Analyst", created_at: "2024-08-20", updated_at: "2024-08-20" },
 ];
 
-export async function login(email: string, roleInput?: UserRole): Promise<{ token: string; user: User }> {
+export async function login(email: string, password?: string, roleInput?: UserRole): Promise<{ token: string; user: User }> {
   try {
     // Try sending login to backend (if configured)
-    const data = await request<{ token: string; user: User }>("/login", {
+    const data = await request<{ token: string; user: any }>("/login", {
       method: "POST",
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password, device_name: "transitops-web" }),
     });
+    
+    if (data.user && data.user.roles) {
+      data.user.role = data.user.roles[0];
+    }
     
     if (typeof window !== "undefined") {
       document.cookie = `transitops_auth_token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
@@ -51,7 +55,11 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!token) return null;
   
   try {
-    return await request<User>("/user");
+    const user = await request<any>("/me");
+    if (user && user.roles) {
+      user.role = user.roles[0];
+    }
+    return user;
   } catch (error) {
     const userStr = localStorage.getItem("transitops_auth_user");
     return userStr ? JSON.parse(userStr) : null;

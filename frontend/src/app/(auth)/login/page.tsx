@@ -24,7 +24,7 @@ import { UserRole } from "@/types/user";
 const ROLE_CONFIG = [
   {
     role: "Fleet Manager" as UserRole,
-    email: "manager@transitops.in",
+    email: "fleet@transitops.com",
     icon: Truck,
     access: "Fleet, Drivers, Maintenance, Analytics",
     color: "from-blue-600/20 to-blue-600/5 border-blue-500/30 hover:border-blue-500/60",
@@ -36,7 +36,7 @@ const ROLE_CONFIG = [
   },
   {
     role: "Dispatcher" as UserRole,
-    email: "Raven.k@transitops.in",
+    email: "dispatcher@transitops.com",
     icon: Compass,
     access: "Fleet (view), Trips",
     color: "from-indigo-600/20 to-indigo-600/5 border-indigo-500/30 hover:border-indigo-500/60",
@@ -48,7 +48,7 @@ const ROLE_CONFIG = [
   },
   {
     role: "Safety Officer" as UserRole,
-    email: "safety@transitops.in",
+    email: "safety@transitops.com",
     icon: Users,
     access: "Drivers, Trips (view)",
     color: "from-amber-600/20 to-amber-600/5 border-amber-500/30 hover:border-amber-500/60",
@@ -60,7 +60,7 @@ const ROLE_CONFIG = [
   },
   {
     role: "Financial Analyst" as UserRole,
-    email: "analyst@transitops.in",
+    email: "finance@transitops.com",
     icon: BarChart3,
     access: "Fleet (view), Fuel & Expenses, Analytics",
     color: "from-emerald-600/20 to-emerald-600/5 border-emerald-500/30 hover:border-emerald-500/60",
@@ -77,8 +77,8 @@ export default function LoginPage() {
   const { toast } = useToast();
   const { isLight, toggleTheme } = useTheme();
 
-  const [email, setEmail] = useState("Raven.k@transitops.in");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("dispatcher@transitops.com");
+  const [password, setPassword] = useState("password");
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("Dispatcher");
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
@@ -89,6 +89,7 @@ export default function LoginPage() {
     if (isLocked) return;
     setSelectedRole(role);
     setEmail(mail);
+    setPassword("password");
     setErrors({});
   };
 
@@ -110,11 +111,11 @@ export default function LoginPage() {
       return;
     }
 
-    const matchesRole = ROLE_CONFIG.find(
-      (r) => r.role === selectedRole && r.email.toLowerCase() === email.toLowerCase()
-    );
-
-    if (!matchesRole || password !== "password123") {
+    try {
+      await login({ email, password, role: selectedRole });
+      toast(`Welcome back!`, "success");
+      window.location.href = "/";
+    } catch (err: any) {
       const nextFailCount = failedCount + 1;
       setFailedCount(nextFailCount);
       if (nextFailCount >= 5) {
@@ -122,18 +123,9 @@ export default function LoginPage() {
         setErrors({ general: "Account locked after 5 failed attempts. Contact your administrator." });
         toast("Account locked due to consecutive failures", "error");
       } else {
-        setErrors({ general: `Invalid credentials. ${5 - nextFailCount} attempt${5 - nextFailCount !== 1 ? "s" : ""} remaining.` });
+        setErrors({ general: err.message || `Invalid credentials. ${5 - nextFailCount} attempt${5 - nextFailCount !== 1 ? "s" : ""} remaining.` });
         toast("Authentication failed", "error");
       }
-      return;
-    }
-
-    try {
-      await login({ email, role: selectedRole });
-      toast(`Welcome back!`, "success");
-      window.location.href = "/";
-    } catch (err: any) {
-      toast(err.message || "Failed to authenticate", "error");
     }
   };
 
