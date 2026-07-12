@@ -1,65 +1,78 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Vehicle\StoreVehicleRequest;
+use App\Http\Requests\Vehicle\UpdateVehicleRequest;
+use App\Http\Resources\VehicleResource;
 use App\Models\Vehicle;
-use Illuminate\Http\Request;
+use App\Services\VehicleService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class VehicleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(private readonly VehicleService $vehicleService)
     {
-        //
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display a paginated listing of vehicles.
      */
-    public function create()
+    public function index(): AnonymousResourceCollection
     {
-        //
+        $vehicles = Vehicle::query()->latest()->paginate(15);
+
+        return VehicleResource::collection($vehicles);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Display the specified vehicle.
      */
-    public function store(Request $request)
+    public function show(Vehicle $vehicle): VehicleResource
     {
-        //
+        return new VehicleResource($vehicle);
     }
 
     /**
-     * Display the specified resource.
+     * Store a newly created vehicle.
      */
-    public function show(Vehicle $vehicle)
+    public function store(StoreVehicleRequest $request): VehicleResource
     {
-        //
+        $vehicle = $this->vehicleService->create($request->validated());
+
+        return new VehicleResource($vehicle);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update the specified vehicle.
      */
-    public function edit(Vehicle $vehicle)
+    public function update(UpdateVehicleRequest $request, Vehicle $vehicle): VehicleResource
     {
-        //
+        $vehicle = $this->vehicleService->update($vehicle, $request->validated());
+
+        return new VehicleResource($vehicle);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Remove the specified vehicle.
      */
-    public function update(Request $request, Vehicle $vehicle)
+    public function destroy(Vehicle $vehicle): JsonResponse
     {
-        //
+        $this->vehicleService->delete($vehicle);
+
+        return response()->json(null, 204);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Retire the specified vehicle.
      */
-    public function destroy(Vehicle $vehicle)
+    public function retire(Vehicle $vehicle): VehicleResource
     {
-        //
+        $vehicle = $this->vehicleService->retire($vehicle);
+
+        return new VehicleResource($vehicle);
     }
 }

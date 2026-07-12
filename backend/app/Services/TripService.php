@@ -88,6 +88,16 @@ class TripService
         });
     }
 
+    public function deleteTrip(Trip $trip): bool
+    {
+        return DB::transaction(static fn (): bool => (bool) $trip->delete());
+    }
+
+    public function delete(Trip $trip): bool
+    {
+        return $this->deleteTrip($trip);
+    }
+
     public function dispatchTrip(Trip $trip): Trip
     {
         if ($trip->status !== Trip::STATUS_DRAFT) {
