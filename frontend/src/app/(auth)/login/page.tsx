@@ -140,13 +140,13 @@ export default function LoginPage() {
   const activeConfig = ROLE_CONFIG.find((r) => r.role === selectedRole);
 
   return (
-    <div className="min-h-screen w-full flex select-none overflow-hidden" style={{ background: "var(--background)" }}>
+    <div className="min-h-[100dvh] w-full flex flex-col lg:flex-row select-none overflow-y-auto lg:overflow-hidden" style={{ background: "var(--background)" }}>
       {/* ── LEFT PANEL: branding + role selector ── */}
       <div 
-        className="hidden lg:flex w-[480px] shrink-0 flex-col relative overflow-hidden"
+        className="flex w-full lg:w-[480px] shrink-0 flex-col relative lg:overflow-hidden border-b lg:border-b-0 lg:border-r"
         style={{ 
           background: "var(--surface-1)", 
-          borderRight: "1px solid var(--border-subtle)" 
+          borderColor: "var(--border-subtle)" 
         }}
       >
         {/* Subtle background geometry */}
@@ -228,7 +228,7 @@ export default function LoginPage() {
 
       {/* ── RIGHT PANEL: form ── */}
       <div 
-        className="flex-1 flex flex-col items-center justify-center relative overflow-hidden"
+        className="flex-1 flex flex-col items-center justify-center relative lg:overflow-hidden pb-12 lg:pb-0"
         style={{ background: "var(--background)" }}
       >
         {/* Background glow */}
@@ -238,7 +238,7 @@ export default function LoginPage() {
         </div>
 
         {/* Theme Toggle (Top Right) */}
-        <div className="absolute top-6 right-6 z-10">
+        <div className="fixed top-6 right-6 z-50">
           <div
             className="flex items-center gap-3 px-3 py-2 rounded-full transition-all duration-200"
             style={{
@@ -291,14 +291,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="relative w-full max-w-md px-8 py-10">
-          {/* Mobile logo */}
-          <div className="flex items-center gap-3 mb-10 lg:hidden">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-white">
-              T
-            </div>
-            <span className="text-lg font-bold" style={{ color: "var(--text-primary)" }}>TransitOps</span>
-          </div>
+        <div className="relative w-full max-w-md px-6 sm:px-8 py-8 sm:py-10 mt-8 lg:mt-0">
 
           {/* Form header */}
           <div className="mb-8">

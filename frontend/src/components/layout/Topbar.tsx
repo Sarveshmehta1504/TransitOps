@@ -1,9 +1,10 @@
 "use client";
 
 import { useAuthContext } from "@/providers/auth-provider";
-import { Bell, Search, X, CheckCircle, AlertTriangle, Info } from "lucide-react";
+import { Bell, Search, X, CheckCircle, AlertTriangle, Info, Menu } from "lucide-react";
 import { format } from "date-fns";
 import { useState, useRef, useEffect } from "react";
+import { useMobileMenu } from "@/providers/mobile-menu-provider";
 
 const MOCK_NOTIFICATIONS = [
   {
@@ -49,6 +50,7 @@ const typeIcon = {
 export default function Topbar() {
   const { user } = useAuthContext();
   const currentDate = format(new Date(), "EEEE, MMMM d, yyyy");
+  const { toggle } = useMobileMenu();
 
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
@@ -83,15 +85,22 @@ export default function Topbar() {
     : "?";
 
   return (
-    <header className="h-16 border-b border-slate-900 bg-slate-950/60 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-40 select-none">
-      {/* Left: Search + Date */}
-      <div className="flex items-center gap-5">
+    <header className="h-16 border-b border-slate-900 bg-slate-950/60 backdrop-blur-md flex items-center justify-between px-4 sm:px-8 sticky top-0 z-40 select-none">
+      {/* Left: Hamburger (Mobile) + Search + Date */}
+      <div className="flex items-center gap-3 sm:gap-5">
+        <button
+          onClick={toggle}
+          className="p-2 lg:hidden text-slate-400 hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded-lg"
+          aria-label="Toggle Menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
         <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-600" />
           <input
             type="text"
             placeholder="Search..."
-            className="pl-9 pr-4 py-2 text-xs bg-slate-900/80 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-indigo-500/60 w-60 placeholder-slate-600"
+            className="pl-9 pr-4 py-2 text-xs bg-slate-900/80 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-indigo-500/60 w-40 lg:w-60 placeholder-slate-600"
           />
         </div>
         <span className="text-xs text-slate-600 font-medium hidden lg:inline-block">

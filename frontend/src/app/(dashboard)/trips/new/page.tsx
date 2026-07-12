@@ -102,7 +102,7 @@ export default function NewTripPage() {
           </p>
         </div>
 
-        <div className="glass-panel border border-slate-800 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+        <div className="glass-panel border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-1 bg-indigo-500" />
 
           <form onSubmit={handleDispatch} className="space-y-6">

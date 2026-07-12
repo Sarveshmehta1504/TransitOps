@@ -238,7 +238,7 @@ export default function TripsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setCompleteTripId(null)} />
             
-            <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl flex flex-col relative overflow-hidden animate-slide-in">
+            <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col relative overflow-y-auto max-h-[90dvh] animate-slide-in">
               <div className="absolute top-0 inset-x-0 h-1 bg-indigo-500" />
               
               <div className="flex items-center justify-between mb-6">

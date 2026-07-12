@@ -72,24 +72,24 @@ export default function DashboardPage() {
     <div className="space-y-8 select-none">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
           Dashboard
         </h1>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-400 text-xs sm:text-sm mt-1">
           Real-time operations center and logistics monitoring.
         </p>
       </div>
 
       {/* FILTERS row */}
-      <div className="flex flex-wrap items-center gap-4 bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
+      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4 bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
         <div className="flex items-center gap-1.5 text-slate-400 text-xs font-semibold uppercase tracking-wider">
           <span>Filters:</span>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
           <select
             value={vehicleType}
             onChange={(e) => setVehicleType(e.target.value)}
-            className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
+            className="flex-1 sm:flex-none bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
           >
             <option value="All">Vehicle Type: All</option>
             <option value="Semi-Truck">Semi-Truck</option>
@@ -100,7 +100,7 @@ export default function DashboardPage() {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
+            className="flex-1 sm:flex-none bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
           >
             <option value="All">Status: All</option>
             <option value="available">Available</option>
@@ -111,7 +111,7 @@ export default function DashboardPage() {
           <select
             value={region}
             onChange={(e) => setRegion(e.target.value)}
-            className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
+            className="flex-1 sm:flex-none bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
           >
             <option value="All">Region: All</option>
             <option value="North">North</option>
@@ -123,7 +123,7 @@ export default function DashboardPage() {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         {/* Active Vehicles */}
         <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Active Vehicles</span>
@@ -202,10 +202,10 @@ export default function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-slate-850">
                 {recentTrips.map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-900/30 transition-colors">
-                    <td className="p-3.5 font-mono text-xs font-bold text-indigo-400">{t.id}</td>
-                    <td className="p-3.5 text-slate-300 text-sm font-semibold">{t.vehicle}</td>
-                    <td className="p-3.5 text-slate-300 text-sm">{t.driver}</td>
+                  <tr key={t.id} className="hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer">
+                    <td className="p-3.5 font-mono text-xs font-bold text-indigo-500 dark:text-indigo-400">{t.id}</td>
+                    <td className="p-3.5 text-slate-700 dark:text-slate-300 text-sm font-semibold">{t.vehicle}</td>
+                    <td className="p-3.5 text-slate-600 dark:text-slate-300 text-sm">{t.driver}</td>
                     <td className="p-3.5">
                       <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full border ${getStatusStyle(t.status)}`}>
                         {t.status}

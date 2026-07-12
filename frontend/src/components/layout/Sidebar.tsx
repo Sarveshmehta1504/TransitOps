@@ -19,6 +19,7 @@ import {
   Sun,
   Moon,
 } from "lucide-react";
+import { useMobileMenu } from "@/providers/mobile-menu-provider";
 import { logout } from "@/lib/api/auth";
 import { useToast } from "@/providers/toast-provider";
 
@@ -27,6 +28,7 @@ export default function Sidebar() {
   const { role, user, setUser } = useAuthContext();
   const { toast } = useToast();
   const { isLight, toggleTheme } = useTheme();
+  const { isOpen, close } = useMobileMenu();
 
   const handleLogout = async () => {
     await logout();
@@ -53,15 +55,28 @@ export default function Sidebar() {
     : "?";
 
   return (
-    <aside
-      className="w-64 flex flex-col shrink-0 transition-colors duration-300"
-      style={{
-        background: "var(--sidebar-bg)",
-        borderRight: "1px solid var(--sidebar-border)",
-      }}
-    >
-      {/* Header */}
-      <div
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity"
+          onClick={close}
+        />
+      )}
+
+      {/* Sidebar Container */}
+      <aside
+        className={cn(
+          "w-64 flex flex-col shrink-0 transition-all duration-300 ease-in-out fixed inset-y-0 left-0 z-50 lg:relative lg:translate-x-0 will-change-transform",
+          isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        )}
+        style={{
+          background: "var(--sidebar-bg)",
+          borderRight: "1px solid var(--sidebar-border)",
+        }}
+      >
+        {/* Header */}
+        <div
         className="h-16 flex items-center px-6 gap-3"
         style={{ borderBottom: "1px solid var(--sidebar-border)" }}
       >
@@ -91,14 +106,14 @@ export default function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 select-none group",
+                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 select-none group",
                 isActive
                   ? isLight
                     ? "bg-indigo-100 text-indigo-700 shadow-md shadow-indigo-100/50"
                     : "bg-indigo-600 text-white shadow-lg shadow-indigo-600/10"
                   : isLight
-                    ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                    ? "text-slate-600 hover:text-indigo-600 hover:bg-slate-100/80 hover:translate-x-1"
+                    : "text-slate-400 hover:text-indigo-400 hover:bg-slate-800/50 hover:translate-x-1"
               )}
             >
               <item.icon
@@ -226,6 +241,7 @@ export default function Sidebar() {
           <span>Logout</span>
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
