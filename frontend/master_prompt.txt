@@ -1,0 +1,166 @@
+# TransitOps — Full Frontend Build Prompt (branch: sarvesh)
+
+Paste this whole block into Antigravity as one task on the `sarvesh` branch only.
+
+---
+
+## 0. GIT WORKFLOW — DO THIS FIRST, EVERY SESSION
+
+This repo has 4 people working in parallel. Before touching any code, always sync cleanly:
+
+```bash
+git fetch origin
+git rebase origin/main
+# resolve conflicts if any appear, then:
+git add .
+git rebase --continue
+```
+
+Rules:
+- Never merge into `main`. Never push to `main`. All work stays on `sarvesh`.
+- Never touch anything under `backend/`. If a rebase conflict touches a backend file, do not resolve it yourself — stop and flag it to me instead of guessing.
+- When ready to save progress, always use:
+  ```bash
+  git add .
+  git commit -m "clear, specific message"
+  git push --force-with-lease origin sarvesh
+  ```
+- `--force-with-lease`, never plain `--force` — it protects against overwriting a teammate's push you haven't seen yet.
+- One logical commit per coherent chunk of work (e.g. "scaffold frontend + api client", "vehicle registry CRUD", "trip dispatch flow") — don't squash unrelated work into one commit.
+- If `git rebase origin/main` reports conflicts only inside `frontend/`, resolve them yourself since that's your territory. If conflicts appear inside `backend/`, abort the rebase (`git rebase --abort`) and tell me before doing anything else.
+
+## 1. UNDERSTAND THE BACKEND FIRST (read-only — do not edit anything here)
+
+Before writing any frontend code, spend real time actually reading the backend so the frontend isn't guessing at shapes. Specifically:
+
+- Open `backend/routes/api.php` (or wherever API routes are registered) and list every existing route: method, path, controller, and whether it's behind auth middleware.
+- Open the corresponding controllers in `backend/app/Http/Controllers/` for each route and note the actual request validation rules and the actual JSON response shape (field names, nesting, pagination format) — don't assume Laravel defaults, read the real code.
+- Open `backend/app/Models/` for Vehicle, Driver, Trip, Maintenance, FuelLog/Expense, User (and Role, if it's a separate model or just a column) — note real column names, casts, relationships (e.g. does Trip belong to Vehicle and Driver, does Vehicle have many MaintenanceRecords).
+- Check `backend/database/migrations/` if a model's fields are unclear from the model file alone — migrations are the ground truth for schema.
+- Check how auth is implemented: Sanctum (SPA cookie-based) vs. Sanctum (token-based) vs. Passport vs. custom. Check `backend/config/sanctum.php` and the login/logout controller to see exactly what it expects and returns.
+- Check `backend/config/cors.php` — note whether `http://localhost:3000` is already allowed. If not, don't edit it — tell me so it can be added on the backend side.
+- Produce a short internal note (a comment block at the top of `frontend/src/lib/api/client.ts` is fine) summarizing: auth mechanism used, token storage expectation, and a table of real endpoints you found (method, path, purpose) — this becomes the contract the rest of the frontend is built against. Do not invent endpoints that don't exist; if something in the spec (e.g. CSV export) has no backend route yet, flag it explicitly instead of building against a guessed URL.
+
+## 2. SCOPE FOR THIS TASK
+
+Build the complete TransitOps frontend inside a `frontend/` folder at the project root (create it if it doesn't exist yet on this branch), following the functional spec below, wired to the real backend contract you just discovered. Do not touch `backend/` at any point.
+
+## 3. TECH STACK
+
+- Next.js 15, App Router, TypeScript strict
+- React 19 — Server Components by default, Client Components only where interactivity is required
+- Tailwind CSS with custom design tokens (no default template look)
+- Radix UI primitives (dialog, dropdown, tabs, select, tooltip, toast) — fully custom-styled
+- TanStack Table (data grids) + TanStack Query (server state)
+- React Hook Form + Zod (forms/validation)
+- Recharts (dashboard charts)
+- Auth wiring matched to whatever you found in Step 1 (Sanctum cookie session vs. Bearer token) — do not assume, use what's actually there
+- date-fns
+- npm
+
+No admin-dashboard template kits, no MUI/Ant/Chakra, no pre-themed shadcn blocks — Radix + your own Tailwind only.
+
+## 4. DESIGN APPROACH
+
+- Use whatever design/prototyping tools and skills you have available (e.g. a design-system skill, a Stitch-style or frontend-design skill, or a "design-task-frontend" workflow if configured in this environment) to establish the visual direction *before* writing component code: define the color tokens, type scale, spacing scale, and component states (default/hover/active/disabled/loading/error/empty) once, in one place, and reuse them everywhere. Don't restyle each page ad hoc.
+- Direction: a confident, data-dense "control room" feel appropriate for fleet operations — one accent color (not default Tailwind blue), consistent semantic status colors (green = Available/Completed, amber = Pending/expiring-soon, red = Suspended/Expired/Retired) used identically across every module.
+- Typography via `next/font`: one distinctive heading face, one clean body face, defined once in `tailwind.config.ts`.
+- Build shared primitives once in `components/ui/` (Button, Input, Select, Dialog, Table shell, Badge, Toast, Skeleton, EmptyState) and reuse across every module — never duplicate a styled button or badge in a feature folder.
+
+## 5. FOLDER STRUCTURE
+
+```
+frontend/
+├── src/
+│   ├── app/
+│   │   ├── (auth)/login/page.tsx
+│   │   ├── (auth)/layout.tsx
+│   │   ├── (dashboard)/layout.tsx
+│   │   ├── (dashboard)/page.tsx
+│   │   ├── (dashboard)/vehicles/page.tsx
+│   │   ├── (dashboard)/vehicles/[id]/page.tsx
+│   │   ├── (dashboard)/drivers/page.tsx
+│   │   ├── (dashboard)/drivers/[id]/page.tsx
+│   │   ├── (dashboard)/trips/page.tsx
+│   │   ├── (dashboard)/trips/new/page.tsx
+│   │   ├── (dashboard)/trips/[id]/page.tsx
+│   │   ├── (dashboard)/maintenance/page.tsx
+│   │   ├── (dashboard)/fuel-expenses/page.tsx
+│   │   ├── (dashboard)/reports/page.tsx
+│   │   ├── (dashboard)/settings/users/page.tsx
+│   │   ├── layout.tsx
+│   │   └── globals.css
+│   ├── components/
+│   │   ├── ui/
+│   │   ├── layout/          # Sidebar, Topbar, RoleGate
+│   │   └── charts/
+│   ├── lib/
+│   │   ├── api/
+│   │   │   ├── client.ts    # base fetch wrapper + the backend-contract summary comment from Step 1
+│   │   │   ├── vehicles.ts
+│   │   │   ├── drivers.ts
+│   │   │   ├── trips.ts
+│   │   │   ├── maintenance.ts
+│   │   │   ├── fuel-expenses.ts
+│   │   │   ├── reports.ts
+│   │   │   └── auth.ts
+│   │   ├── validators/      # zod schemas per entity
+│   │   ├── constants.ts
+│   │   └── utils.ts
+│   ├── hooks/                # useVehicles, useDrivers, useTrips, useMaintenance, useFuelExpenses, useReports, useAuth
+│   ├── types/                 # vehicle.ts, driver.ts, trip.ts, maintenance.ts, fuel-expense.ts, user.ts, api.ts
+│   ├── providers/             # query-provider, auth-provider, toast-provider
+│   └── middleware.ts
+├── public/
+├── .env.local.example
+├── next.config.ts
+├── tailwind.config.ts
+├── tsconfig.json
+├── package.json
+└── README.md
+```
+
+## 6. AUTH & RBAC
+
+Roles: Fleet Manager, Driver, Safety Officer, Financial Analyst.
+
+- Wire login/logout/session using exactly the mechanism found in Step 1 — do not guess.
+- `middleware.ts` redirects unauthenticated users to `/login`.
+- Route-group access: `settings/users` → Fleet Manager only. `reports` → Financial Analyst + Fleet Manager. `trips/new` → Driver + Fleet Manager. Safety Officer gets full visibility into drivers/compliance, read access elsewhere.
+- Hide nav items the current role can't access AND guard the route itself (both layers).
+
+## 7. DASHBOARD
+
+KPI cards: Active Vehicles, Available Vehicles, Vehicles in Maintenance, Active Trips, Pending Trips, Drivers On Duty, Fleet Utilization (%).
+Filter bar: vehicle type, status, region — client component, re-fetches via TanStack Query.
+Two Recharts visuals: utilization trend + status breakdown, styled to the custom token set, not default Recharts look.
+
+## 8. MODULES — BUILD IN THIS ORDER
+
+1. **Auth** — login page + session wiring.
+2. **Vehicle Registry** — TanStack Table: Reg No (unique), Name/Model, Type, Max Load, Odometer, Acquisition Cost, Status (Available/On Trip/In Shop/Retired, color-coded). Create/edit modal, Zod-validated. Detail page: linked trips, maintenance, fuel logs.
+3. **Driver Management** — Name, License No, License Category, License Expiry (flag <30 days and expired distinctly), Contact, Safety Score, Status (Available/On Trip/Off Duty/Suspended).
+4. **Trip Management** — lifecycle board (Draft → Dispatched → Completed → Cancelled). New Trip wizard: source, destination, only *available* vehicles, only *available, non-suspended, non-expired-license* drivers, cargo weight (client-side check against selected vehicle's max load, backend remains final authority), planned distance. Dispatch/Complete/Cancel call real backend endpoints; reflect status via TanStack Query mutations + refetch.
+5. **Maintenance** — create maintenance record for a vehicle; render backend-driven status flip to In Shop, don't compute it client-side.
+6. **Fuel & Expense Management** — log fuel (liters, cost, date) and expenses (tolls etc.); show total operational cost per vehicle exactly as the API returns it.
+7. **Reports & Analytics** — Fuel Efficiency (Distance/Fuel), Fleet Utilization, Operational Cost, Vehicle ROI `(Revenue − (Maintenance + Fuel)) / Acquisition Cost`. CSV export client-side from fetched data. PDF export: disabled button with "coming soon" tooltip (bonus, skip for now).
+
+## 9. API INTEGRATION
+
+- Base URL from `NEXT_PUBLIC_API_URL` only — never hardcode a host in a component.
+- One thin `lib/api/<entity>.ts` per entity, one matching `hooks/use-<entity>.ts` — components call hooks only, never `lib/api` directly.
+- Shared error-parsing utility for Laravel's typical `{ message, errors: { field: [...] } }` shape so every form surfaces field errors the same way.
+
+## 10. VERIFICATION BEFORE CALLING ANYTHING DONE
+
+- `cd frontend && npm install && npm run dev` runs clean on port 3000.
+- RBAC actually hides/blocks per role — check all four roles.
+- Dispatch dropdowns actually filter to available-only vehicles/drivers.
+- Every form validates before submit and surfaces real backend validation errors.
+- Note any gaps (missing backend endpoint, unclear auth flow, CORS not yet allowing localhost:3000) briefly at the end — don't silently fake a whole module if a backend route is missing.
+
+## 11. OUT OF SCOPE
+
+- Anything in `backend/`.
+- Bonus items (email reminders, document management, dark mode, PDF export) — come back to me before starting any of these.
+- Merging or pushing to `main` — everything stays on `sarvesh`, pushed with `--force-with-lease` per the workflow in section 0.
