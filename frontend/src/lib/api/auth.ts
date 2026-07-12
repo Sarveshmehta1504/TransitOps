@@ -8,6 +8,25 @@ export const MOCK_USERS: User[] = [
   { id: 4, name: "Clara Oswald", email: "finance@transitops.com", role: "Financial Analyst", created_at: "2024-08-20", updated_at: "2024-08-20" },
 ];
 
+function normalizeUser(raw: any): any {
+  if (!raw) return raw;
+  // Normalize role from roles array if needed
+  if (raw.roles && !raw.role) {
+    raw.role = raw.roles[0];
+  }
+  // Normalize name — Laravel may return first_name/last_name instead of name
+  if (!raw.name) {
+    if (raw.first_name || raw.last_name) {
+      raw.name = [raw.first_name, raw.last_name].filter(Boolean).join(" ");
+    } else if (raw.email) {
+      raw.name = raw.email.split("@")[0];
+    } else {
+      raw.name = "User";
+    }
+  }
+  return raw;
+}
+
 export async function login(email: string, password?: string, roleInput?: UserRole): Promise<{ token: string; user: User }> {
   try {
     // Try sending login to backend (if configured)
@@ -16,9 +35,7 @@ export async function login(email: string, password?: string, roleInput?: UserRo
       body: JSON.stringify({ email, password, device_name: "transitops-web" }),
     });
     
-    if (data.user && data.user.roles) {
-      data.user.role = data.user.roles[0];
-    }
+    normalizeUser(data.user);
     
     if (typeof window !== "undefined") {
       document.cookie = `transitops_auth_token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
@@ -56,15 +73,15 @@ export async function getCurrentUser(): Promise<User | null> {
   
   try {
     const user = await request<any>("/me");
-    if (user && user.roles) {
-      user.role = user.roles[0];
-    }
+    normalizeUser(user);
     return user;
   } catch (error) {
     const userStr = localStorage.getItem("transitops_auth_user");
-    return userStr ? JSON.parse(userStr) : null;
+    const parsed = userStr ? JSON.parse(userStr) : null;
+    return normalizeUser(parsed);
   }
 }
+
 
 export async function logout(): Promise<void> {
   if (typeof window !== "undefined") {
