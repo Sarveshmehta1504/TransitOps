@@ -101,22 +101,22 @@ class DashboardService
 
     public function getFinancialStatistics(): array
     {
-        $fuel = Trip::sum('fuel_cost');
+        $fuel = FuelLog::sum('total_cost');
 
-        $expense = Trip::sum('expense_cost');
+        $expense = Expense::sum('amount');
 
         $maintenance = MaintenanceLog::sum('cost');
 
         return [
 
-            'fuel_cost' => round($fuel,2),
+            'fuel_cost' => round((float)$fuel,2),
 
-            'expense_cost' => round($expense,2),
+            'expense_cost' => round((float)$expense,2),
 
-            'maintenance_cost' => round($maintenance,2),
+            'maintenance_cost' => round((float)$maintenance,2),
 
             'total_cost' => round(
-                $fuel + $expense + $maintenance,
+                (float)$fuel + (float)$expense + (float)$maintenance,
                 2
             ),
         ];
@@ -124,7 +124,7 @@ class DashboardService
 
     public function getRecentTrips(int $limit = 10)
     {
-        return Trip::newQuery()
+        return Trip::query()
             ->with([
                 'vehicle',
                 'driver',
@@ -136,7 +136,7 @@ class DashboardService
 
     public function getRecentExpenses(int $limit = 10)
     {
-        return Expense::newQuery()
+        return Expense::query()
             ->with([
                 'vehicle',
                 'trip',
@@ -148,7 +148,7 @@ class DashboardService
 
     public function getRecentFuelLogs(int $limit = 10)
     {
-        return FuelLog::newQuery()
+        return FuelLog::query()
             ->with([
                 'vehicle',
                 'trip',
@@ -160,7 +160,7 @@ class DashboardService
 
     public function getRecentMaintenance(int $limit = 10)
     {
-        return MaintenanceLog::newQuery()
+        return MaintenanceLog::query()
             ->with('vehicle')
             ->latest()
             ->take($limit)
@@ -169,8 +169,13 @@ class DashboardService
 
     public function getMonthlyExpenseChart()
     {
-        return Expense::newQuery()
-            ->selectRaw('MONTH(expense_date) as month, SUM(amount) as total')
+        $driver = \DB::connection()->getDriverName();
+        $select = $driver === 'sqlite' 
+            ? 'strftime("%m", expense_date) as month, SUM(amount) as total' 
+            : 'MONTH(expense_date) as month, SUM(amount) as total';
+
+        return Expense::query()
+            ->selectRaw($select)
             ->groupBy('month')
             ->orderBy('month')
             ->get();
@@ -178,8 +183,13 @@ class DashboardService
 
     public function getMonthlyFuelChart()
     {
-        return FuelLog::newQuery()
-            ->selectRaw('MONTH(fuel_date) as month, SUM(total_cost) as total')
+        $driver = \DB::connection()->getDriverName();
+        $select = $driver === 'sqlite' 
+            ? 'strftime("%m", fuel_date) as month, SUM(total_cost) as total' 
+            : 'MONTH(fuel_date) as month, SUM(total_cost) as total';
+
+        return FuelLog::query()
+            ->selectRaw($select)
             ->groupBy('month')
             ->orderBy('month')
             ->get();
@@ -187,7 +197,7 @@ class DashboardService
 
     public function getTopVehiclesByDistance(int $limit = 5)
     {
-        return Vehicle::newQuery()
+        return Vehicle::query()
             ->withSum('trips', 'actual_distance')
             ->orderByDesc('trips_sum_actual_distance')
             ->take($limit)
@@ -196,7 +206,7 @@ class DashboardService
 
     public function getTopDriversByTrips(int $limit = 5)
     {
-        return Driver::newQuery()
+        return Driver::query()
             ->withCount([
                 'trips as completed_trips' => function ($query) {
                     $query->where('status', Trip::STATUS_COMPLETED);

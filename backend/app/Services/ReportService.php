@@ -164,14 +164,14 @@ class ReportService
 
         return [
 
-            'fuel_cost' => round($fuel, 2),
+            'fuel_cost' => round((float)$fuel, 2),
 
-            'expense_cost' => round($expense, 2),
+            'expense_cost' => round((float)$expense, 2),
 
-            'maintenance_cost' => round($maintenance, 2),
+            'maintenance_cost' => round((float)$maintenance, 2),
 
             'overall_cost' => round(
-                $fuel + $expense + $maintenance,
+                (float)$fuel + (float)$expense + (float)$maintenance,
                 2
             ),
         ];
@@ -194,12 +194,12 @@ class ReportService
             'completed_trips' => Trip::where('status', Trip::STATUS_COMPLETED)->count(),
 
             'average_trip_distance' => round(
-                Trip::avg('actual_distance') ?? 0,
+                (float)(Trip::avg('actual_distance') ?? 0),
                 2
             ),
 
             'average_fuel_consumption' => round(
-                FuelLog::avg('quantity') ?? 0,
+                (float)(FuelLog::avg('quantity') ?? 0),
                 2
             ),
         ];

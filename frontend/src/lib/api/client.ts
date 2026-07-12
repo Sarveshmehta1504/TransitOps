@@ -115,8 +115,8 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
     return res.json() as Promise<T>;
   } catch (error: any) {
     // If backend 404/500/failed to fetch, we fallback to mockDB
-    if (error.status === 404 || error.message?.includes("Failed to fetch") || !options) {
-      console.warn(`API path ${path} returned error or missing. Falling back to local Storage Mock DB.`);
+    if (error.status === 404 || error.status === 500 || error.message?.includes("Failed to fetch") || !options) {
+      console.warn(`API path ${path} returned error or missing (${error.status || error.message}). Falling back to local Storage Mock DB.`);
       return handleMockRequest<T>(path, options);
     }
     throw error;
