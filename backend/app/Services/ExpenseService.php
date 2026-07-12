@@ -34,6 +34,13 @@ class ExpenseService
 		return DB::transaction(function () use ($data): Expense {
 			$vehicle = $this->resolveVehicle($data['vehicle_id'] ?? null);
 			$trip = $this->resolveTrip($data['trip_id'] ?? null);
+
+            if ($trip !== null && $trip->vehicle_id !== $vehicle->id) {
+                throw new BusinessRuleException(
+                    'The selected trip does not belong to the selected vehicle.'
+                );
+            }
+
 			$amount = $this->requirePositiveAmount($data['amount'] ?? null);
 			$expenseDate = $this->requireValidExpenseDate($data['expense_date'] ?? null);
 			$paymentMethod = $this->requireValidPaymentMethod($data['payment_method'] ?? null);
@@ -51,7 +58,12 @@ class ExpenseService
 			$expense->payment_method = $paymentMethod;
 			$expense->save();
 
-			return $expense->refresh();
+			return $expense
+                ->refresh()
+                ->load([
+                    'vehicle',
+                    'trip',
+                ]);
 		});
 	}
 
@@ -68,6 +80,13 @@ class ExpenseService
 		return DB::transaction(function () use ($expense, $data): Expense {
 			$vehicle = $this->resolveVehicle($data['vehicle_id'] ?? $expense->vehicle_id);
 			$trip = $this->resolveTrip($data['trip_id'] ?? $expense->trip_id);
+
+            if ($trip !== null && $trip->vehicle_id !== $vehicle->id) {
+                throw new BusinessRuleException(
+                    'The selected trip does not belong to the selected vehicle.'
+                );
+            }
+
 			$amount = $this->requirePositiveAmount($data['amount'] ?? $expense->amount);
 			$expenseDate = $this->requireValidExpenseDate($data['expense_date'] ?? $expense->expense_date);
 			$paymentMethod = $this->requireValidPaymentMethod($data['payment_method'] ?? $expense->payment_method);
@@ -86,7 +105,12 @@ class ExpenseService
 			$expense->payment_method = $paymentMethod;
 			$expense->save();
 
-			return $expense->refresh();
+			return $expense
+                ->refresh()
+                ->load([
+                    'vehicle',
+                    'trip',
+                ]);
 		});
 	}
 
