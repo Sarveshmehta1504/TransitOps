@@ -99,8 +99,7 @@ body {
 /* Page body + main content background */
 [data-theme="light"] body,
 [data-theme="light"] main,
-[data-theme="light"] .min-h-screen,
-[data-theme="light"] .flex-1 { background-color: var(--background) !important; }
+[data-theme="light"] .min-h-screen { background-color: var(--background) !important; }
 
 /* Surfaces */
 [data-theme="light"] .bg-slate-950 { background-color: var(--surface-1) !important; }
