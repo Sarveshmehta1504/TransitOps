@@ -12,17 +12,50 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('expenses', function (Blueprint $table) {
+
             $table->id();
 
-            $table->foreignId('vehicle_id');
+            $table->foreignId('vehicle_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-            $table->string('type');
+            $table->foreignId('trip_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
 
-            $table->decimal('amount');
+            $table->enum('expense_type', [
+                'toll',
+                'parking',
+                'insurance',
+                'registration',
+                'driver_allowance',
+                'fine',
+                'tax',
+                'miscellaneous',
+            ]);
 
-            $table->date('expense_date');
+            $table->string('title');
+
+            $table->decimal('amount', 12, 2);
+
+            $table->timestamp('expense_date');
+
+            $table->string('paid_by')->nullable();
+
+            $table->enum('payment_method', [
+                'cash',
+                'card',
+                'upi',
+                'bank_transfer',
+            ])->nullable();
+
+            $table->string('receipt_number')->nullable();
+
+            $table->text('remarks')->nullable();
 
             $table->timestamps();
+
         });
     }
 
