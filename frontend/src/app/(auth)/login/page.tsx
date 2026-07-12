@@ -77,19 +77,17 @@ export default function LoginPage() {
   const { toast } = useToast();
   const { isLight, toggleTheme } = useTheme();
 
-  const [email, setEmail] = useState("dispatcher@transitops.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("Dispatcher");
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [failedCount, setFailedCount] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
 
-  const handleSelectRole = (role: UserRole, mail: string) => {
+  const handleSelectRole = (role: UserRole) => {
     if (isLocked) return;
     setSelectedRole(role);
-    setEmail(mail);
-    setPassword("password");
     setErrors({});
   };
 
@@ -179,7 +177,7 @@ export default function LoginPage() {
                 <button
                   key={rc.role}
                   type="button"
-                  onClick={() => handleSelectRole(rc.role, rc.email)}
+                  onClick={() => handleSelectRole(rc.role)}
                   disabled={isLocked}
                   className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 group ${
                     isActive
@@ -382,7 +380,7 @@ export default function LoginPage() {
                 onChange={(e) => {
                   const role = e.target.value as UserRole;
                   const config = ROLE_CONFIG.find((r) => r.role === role);
-                  if (config) handleSelectRole(role, config.email);
+                  if (config) handleSelectRole(role);
                 }}
                 className={`w-full border text-sm px-4 py-3 rounded-xl focus:outline-none transition-colors appearance-none cursor-pointer ${
                   isLight ? "border-slate-200 hover:border-slate-300 focus:border-indigo-500 bg-white text-slate-900" : "border-slate-800 hover:border-slate-700 focus:border-indigo-500 bg-slate-900 text-slate-200"
