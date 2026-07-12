@@ -1,65 +1,75 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\FuelLog\StoreFuelLogRequest;
+use App\Http\Requests\FuelLog\UpdateFuelLogRequest;
+use App\Http\Resources\FuelLogResource;
 use App\Models\FuelLog;
-use Illuminate\Http\Request;
+use App\Services\FuelLogService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class FuelLogController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(private readonly FuelLogService $fuelLogService)
     {
-        //
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display a paginated listing of fuel logs.
      */
-    public function create()
+    public function index(): AnonymousResourceCollection
     {
-        //
+        $fuelLogs = FuelLog::query()
+            ->with(['vehicle', 'trip'])
+            ->latest()
+            ->paginate(15);
+
+        return FuelLogResource::collection($fuelLogs);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Display the specified fuel log.
      */
-    public function store(Request $request)
+    public function show(FuelLog $fuelLog): FuelLogResource
     {
-        //
+        $fuelLog->load(['vehicle', 'trip']);
+
+        return new FuelLogResource($fuelLog);
     }
 
     /**
-     * Display the specified resource.
+     * Store a newly created fuel log.
      */
-    public function show(FuelLog $fuelLog)
+    public function store(StoreFuelLogRequest $request): FuelLogResource
     {
-        //
+        $fuelLog = $this->fuelLogService->create($request->validated());
+        $fuelLog->load(['vehicle', 'trip']);
+
+        return new FuelLogResource($fuelLog);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update the specified fuel log.
      */
-    public function edit(FuelLog $fuelLog)
+    public function update(UpdateFuelLogRequest $request, FuelLog $fuelLog): FuelLogResource
     {
-        //
+        $fuelLog = $this->fuelLogService->update($fuelLog, $request->validated());
+        $fuelLog->load(['vehicle', 'trip']);
+
+        return new FuelLogResource($fuelLog);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Remove the specified fuel log.
      */
-    public function update(Request $request, FuelLog $fuelLog)
+    public function destroy(FuelLog $fuelLog): JsonResponse
     {
-        //
-    }
+        $this->fuelLogService->delete($fuelLog);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(FuelLog $fuelLog)
-    {
-        //
+        return response()->json(null, 204);
     }
 }

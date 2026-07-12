@@ -1,65 +1,105 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Trip\CompleteTripRequest;
+use App\Http\Requests\Trip\DispatchTripRequest;
+use App\Http\Requests\Trip\StoreTripRequest;
+use App\Http\Requests\Trip\UpdateTripRequest;
+use App\Http\Resources\TripResource;
 use App\Models\Trip;
-use Illuminate\Http\Request;
+use App\Services\TripService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class TripController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(private readonly TripService $tripService)
     {
-        //
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display a paginated listing of trips.
      */
-    public function create()
+    public function index(): AnonymousResourceCollection
     {
-        //
+        $trips = Trip::query()
+            ->with(['vehicle', 'driver', 'fuelLogs', 'expenses'])
+            ->latest()
+            ->paginate(15);
+
+        return TripResource::collection($trips);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Display the specified trip.
      */
-    public function store(Request $request)
+    public function show(Trip $trip): TripResource
     {
-        //
+        $trip->load(['vehicle', 'driver', 'fuelLogs', 'expenses']);
+
+        return new TripResource($trip);
     }
 
     /**
-     * Display the specified resource.
+     * Store a newly created trip.
      */
-    public function show(Trip $trip)
+    public function store(StoreTripRequest $request): TripResource
     {
-        //
+        $trip = $this->tripService->createTrip($request->validated());
+
+        return new TripResource($trip);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update the specified trip.
      */
-    public function edit(Trip $trip)
+    public function update(UpdateTripRequest $request, Trip $trip): TripResource
     {
-        //
+        $trip = $this->tripService->updateTrip($trip, $request->validated());
+
+        return new TripResource($trip);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Remove the specified trip.
      */
-    public function update(Request $request, Trip $trip)
+    public function destroy(Trip $trip): JsonResponse
     {
-        //
+        call_user_func([$this->tripService, 'deleteTrip'], $trip);
+
+        return response()->json(null, 204);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Dispatch the specified trip.
      */
-    public function destroy(Trip $trip)
+    public function dispatch(Trip $trip, DispatchTripRequest $request): TripResource
     {
-        //
+        $trip = $this->tripService->dispatchTrip($trip);
+
+        return new TripResource($trip);
+    }
+
+    /**
+     * Complete the specified trip.
+     */
+    public function complete(Trip $trip, CompleteTripRequest $request): TripResource
+    {
+        $trip = $this->tripService->completeTrip($trip, $request->validated());
+
+        return new TripResource($trip);
+    }
+
+    /**
+     * Cancel the specified trip.
+     */
+    public function cancel(Trip $trip): TripResource
+    {
+        $trip = $this->tripService->cancelTrip($trip);
+
+        return new TripResource($trip);
     }
 }

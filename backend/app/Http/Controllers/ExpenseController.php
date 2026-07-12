@@ -1,65 +1,75 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Expense\StoreExpenseRequest;
+use App\Http\Requests\Expense\UpdateExpenseRequest;
+use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
-use Illuminate\Http\Request;
+use App\Services\ExpenseService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ExpenseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(private readonly ExpenseService $expenseService)
     {
-        //
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display a paginated listing of expenses.
      */
-    public function create()
+    public function index(): AnonymousResourceCollection
     {
-        //
+        $expenses = Expense::query()
+            ->with(['vehicle', 'trip'])
+            ->latest()
+            ->paginate(15);
+
+        return ExpenseResource::collection($expenses);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Display the specified expense.
      */
-    public function store(Request $request)
+    public function show(Expense $expense): ExpenseResource
     {
-        //
+        $expense->load(['vehicle', 'trip']);
+
+        return new ExpenseResource($expense);
     }
 
     /**
-     * Display the specified resource.
+     * Store a newly created expense.
      */
-    public function show(Expense $expense)
+    public function store(StoreExpenseRequest $request): ExpenseResource
     {
-        //
+        $expense = $this->expenseService->create($request->validated());
+        $expense->load(['vehicle', 'trip']);
+
+        return new ExpenseResource($expense);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update the specified expense.
      */
-    public function edit(Expense $expense)
+    public function update(UpdateExpenseRequest $request, Expense $expense): ExpenseResource
     {
-        //
+        $expense = $this->expenseService->update($expense, $request->validated());
+        $expense->load(['vehicle', 'trip']);
+
+        return new ExpenseResource($expense);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Remove the specified expense.
      */
-    public function update(Request $request, Expense $expense)
+    public function destroy(Expense $expense): JsonResponse
     {
-        //
-    }
+        $this->expenseService->delete($expense);
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Expense $expense)
-    {
-        //
+        return response()->json(null, 204);
     }
 }

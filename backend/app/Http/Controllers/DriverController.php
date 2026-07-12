@@ -1,65 +1,88 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Driver\StoreDriverRequest;
+use App\Http\Requests\Driver\UpdateDriverRequest;
+use App\Http\Resources\DriverResource;
 use App\Models\Driver;
-use Illuminate\Http\Request;
+use App\Services\DriverService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class DriverController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function __construct(private readonly DriverService $driverService)
     {
-        //
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display a paginated listing of drivers.
      */
-    public function create()
+    public function index(): AnonymousResourceCollection
     {
-        //
+        $drivers = Driver::query()->latest()->paginate(15);
+
+        return DriverResource::collection($drivers);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Display the specified driver.
      */
-    public function store(Request $request)
+    public function show(Driver $driver): DriverResource
     {
-        //
+        return new DriverResource($driver);
     }
 
     /**
-     * Display the specified resource.
+     * Store a newly created driver.
      */
-    public function show(Driver $driver)
+    public function store(StoreDriverRequest $request): DriverResource
     {
-        //
+        $driver = $this->driverService->create($request->validated());
+
+        return new DriverResource($driver);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update the specified driver.
      */
-    public function edit(Driver $driver)
+    public function update(UpdateDriverRequest $request, Driver $driver): DriverResource
     {
-        //
+        $driver = $this->driverService->update($driver, $request->validated());
+
+        return new DriverResource($driver);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Remove the specified driver.
      */
-    public function update(Request $request, Driver $driver)
+    public function destroy(Driver $driver): JsonResponse
     {
-        //
+        $this->driverService->delete($driver);
+
+        return response()->json(null, 204);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Suspend the specified driver.
      */
-    public function destroy(Driver $driver)
+    public function suspend(Driver $driver): DriverResource
     {
-        //
+        $driver = $this->driverService->suspend($driver);
+
+        return new DriverResource($driver);
+    }
+
+    /**
+     * Activate the specified driver.
+     */
+    public function activate(Driver $driver): DriverResource
+    {
+        $driver = $this->driverService->activate($driver);
+
+        return new DriverResource($driver);
     }
 }
