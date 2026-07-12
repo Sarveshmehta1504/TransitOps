@@ -34,6 +34,12 @@ class FuelLogService
 			$vehicle = $this->resolveVehicle($data['vehicle_id'] ?? null);
 			$trip = $this->resolveTrip($data['trip_id'] ?? null);
 
+            if ($trip !== null && $trip->vehicle_id !== $vehicle->id) {
+                throw new BusinessRuleException(
+                    'The selected trip does not belong to the selected vehicle.'
+                );
+            }
+
 			$quantity = $this->requirePositiveFloat($data['quantity'] ?? null, 'Quantity must be greater than 0.');
 			$pricePerLiter = $this->requirePositiveFloat($data['price_per_liter'] ?? null, 'Price per liter must be greater than 0.');
 			$odometerReading = $this->requireNumericFloat($data['odometer_reading'] ?? null, 'Odometer reading is required.');
@@ -56,7 +62,12 @@ class FuelLogService
 
 			$this->updateVehicleOdometerIfHigher($vehicle, $odometerReading);
 
-			return $fuelLog->refresh();
+			return $fuelLog
+                ->refresh()
+                ->load([
+                    'vehicle',
+                    'trip',
+                ]);
 		});
 	}
 
@@ -73,6 +84,12 @@ class FuelLogService
 		return DB::transaction(function () use ($fuelLog, $data): FuelLog {
 			$vehicle = $this->resolveVehicle($data['vehicle_id'] ?? $fuelLog->vehicle_id);
 			$trip = $this->resolveTrip($data['trip_id'] ?? $fuelLog->trip_id);
+
+            if ($trip !== null && $trip->vehicle_id !== $vehicle->id) {
+                throw new BusinessRuleException(
+                    'The selected trip does not belong to the selected vehicle.'
+                );
+            }
 
 			$quantity = $this->requirePositiveFloat($data['quantity'] ?? $fuelLog->quantity, 'Quantity must be greater than 0.');
 			$pricePerLiter = $this->requirePositiveFloat($data['price_per_liter'] ?? $fuelLog->price_per_liter, 'Price per liter must be greater than 0.');
@@ -97,7 +114,12 @@ class FuelLogService
 
 			$this->updateVehicleOdometerIfHigher($vehicle, $odometerReading);
 
-			return $fuelLog->refresh();
+			return $fuelLog
+                ->refresh()
+                ->load([
+                    'vehicle',
+                    'trip',
+                ]);
 		});
 	}
 

@@ -42,7 +42,9 @@ class MaintenanceService
 			$vehicle->status = Vehicle::STATUS_IN_SHOP;
 			$vehicle->save();
 
-			return $maintenance->refresh();
+			return $maintenance
+                ->refresh()
+                ->load('vehicle');
 		});
 	}
 
@@ -64,7 +66,9 @@ class MaintenanceService
 			$maintenance->fill($data);
 			$maintenance->save();
 
-			return $maintenance->refresh();
+			return $maintenance
+                ->refresh()
+                ->load('vehicle');
 		});
 	}
 
@@ -91,7 +95,9 @@ class MaintenanceService
 			$maintenance->status = MaintenanceLog::STATUS_IN_PROGRESS;
 			$maintenance->save();
 
-			return $maintenance->refresh();
+			return $maintenance
+                ->refresh()
+                ->load('vehicle');
 		});
 	}
 
@@ -119,7 +125,9 @@ class MaintenanceService
 				$vehicle->save();
 			}
 
-			return $maintenance->refresh();
+			return $maintenance
+                ->refresh()
+                ->load('vehicle');
 		});
 	}
 
@@ -147,7 +155,9 @@ class MaintenanceService
 				$vehicle->save();
 			}
 
-			return $maintenance->refresh();
+			return $maintenance
+                ->refresh()
+                ->load('vehicle');
 		});
 	}
 
@@ -158,6 +168,12 @@ class MaintenanceService
 	 */
 	public function delete(MaintenanceLog $maintenance): bool
 	{
+        if ($maintenance->status === MaintenanceLog::STATUS_IN_PROGRESS) {
+            throw new BusinessRuleException(
+                'Maintenance in progress cannot be deleted.'
+            );
+        }
+
 		return DB::transaction(static fn (): bool => (bool) $maintenance->delete());
 	}
 

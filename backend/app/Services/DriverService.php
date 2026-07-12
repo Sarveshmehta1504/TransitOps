@@ -41,7 +41,9 @@ class DriverService
 
 			$driver->save();
 
-			return $driver->refresh();
+			return $driver
+                ->refresh()
+                ->load('trips');
 		});
 	}
 
@@ -72,7 +74,9 @@ class DriverService
 			$driver->fill($data);
 			$driver->save();
 
-			return $driver->refresh();
+			return $driver
+                ->refresh()
+                ->load('trips');
 		});
 	}
 
@@ -83,6 +87,12 @@ class DriverService
 	 */
 	public function delete(Driver $driver): bool
 	{
+        if ($driver->status === Driver::STATUS_ON_TRIP) {
+            throw new BusinessRuleException(
+                'Driver currently on trip cannot be deleted.'
+            );
+        }
+
 		return DB::transaction(static fn (): bool => (bool) $driver->delete());
 	}
 
@@ -101,13 +111,17 @@ class DriverService
 			}
 
 			if ($driver->status === Driver::STATUS_SUSPENDED) {
-				return $driver->refresh();
+				return $driver
+                    ->refresh()
+                    ->load('trips');
 			}
 
 			$driver->status = Driver::STATUS_SUSPENDED;
 			$driver->save();
 
-			return $driver->refresh();
+			return $driver
+                ->refresh()
+                ->load('trips');
 		});
 	}
 
@@ -130,7 +144,9 @@ class DriverService
 			$driver->status = Driver::STATUS_AVAILABLE;
 			$driver->save();
 
-			return $driver->refresh();
+			return $driver
+                ->refresh()
+                ->load('trips');
 		});
 	}
 

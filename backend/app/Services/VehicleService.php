@@ -76,6 +76,18 @@ class VehicleService
 	 */
 	public function delete(Vehicle $vehicle): bool
 	{
+        if ($vehicle->status === Vehicle::STATUS_ON_TRIP) {
+            throw new BusinessRuleException(
+                'Vehicle currently on trip cannot be deleted.'
+            );
+        }
+
+        if ($vehicle->status === Vehicle::STATUS_IN_SHOP) {
+            throw new BusinessRuleException(
+                'Vehicle currently in shop cannot be deleted.'
+            );
+        }
+
 		return DB::transaction(static fn (): bool => (bool) $vehicle->delete());
 	}
 
@@ -92,6 +104,18 @@ class VehicleService
 			if ($vehicle->status === Vehicle::STATUS_RETIRED) {
 				throw new BusinessRuleException('This vehicle is already retired.');
 			}
+
+            if ($vehicle->status === Vehicle::STATUS_ON_TRIP) {
+                throw new BusinessRuleException(
+                    'Vehicle currently on trip cannot be retired.'
+                );
+            }
+
+            if ($vehicle->status === Vehicle::STATUS_IN_SHOP) {
+                throw new BusinessRuleException(
+                    'Vehicle under maintenance cannot be retired.'
+                );
+            }
 
 			$vehicle->status = Vehicle::STATUS_RETIRED;
 			$vehicle->save();
