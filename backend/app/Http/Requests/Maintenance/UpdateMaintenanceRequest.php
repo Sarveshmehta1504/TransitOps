@@ -16,7 +16,7 @@ class UpdateMaintenanceRequest extends FormRequest
         return [
             'vehicle_id' => 'required|exists:vehicles,id',
 
-            'maintenance_type' => 'required|string|max:100',
+            'maintenance_type' => 'required|in:preventive,corrective,inspection,emergency',
 
             'title' => 'required|string|max:255',
 
@@ -29,8 +29,6 @@ class UpdateMaintenanceRequest extends FormRequest
             'start_date' => 'required|date',
 
             'end_date' => 'nullable|date|after_or_equal:start_date',
-
-            'next_service_date' => 'nullable|date|after_or_equal:start_date',
 
             'status' => 'required|in:scheduled,in_progress,completed,cancelled',
 

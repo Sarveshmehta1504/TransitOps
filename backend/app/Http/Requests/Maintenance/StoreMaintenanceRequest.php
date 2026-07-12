@@ -16,7 +16,7 @@ class StoreMaintenanceRequest extends FormRequest
         return [
             'vehicle_id' => 'required|exists:vehicles,id',
 
-            'maintenance_type' => 'required|enum:preventive,corrective,inspection,emergency',
+            'maintenance_type' => 'required|in:preventive,corrective,inspection,emergency',
 
             'title' => 'required|string|max:255',
 
@@ -26,7 +26,7 @@ class StoreMaintenanceRequest extends FormRequest
 
             'start_date' => 'required|date',
 
-            'status' => 'required|enum:scheduled,in_progress,completed,cancelled',
+            'status' => 'required|in:scheduled',
 
             'remarks' => 'nullable|string',
         ];

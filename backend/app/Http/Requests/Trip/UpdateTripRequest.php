@@ -13,13 +13,10 @@ class UpdateTripRequest extends FormRequest
 
     public function rules(): array
     {
-        $tripId = $this->route('trip')->id;
 
         return [
             'vehicle_id' => 'required|exists:vehicles,id',
             'driver_id' => 'required|exists:drivers,id',
-
-            'trip_number' => 'required|string|unique:trips,trip_number,' . $tripId,
 
             'source' => 'required|string|max:255',
             'destination' => 'required|string|max:255',

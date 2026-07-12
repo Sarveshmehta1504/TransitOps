@@ -19,10 +19,10 @@ class StoreDriverRequest extends FormRequest
             'license_category' => 'required|string|max:50',
             'license_expiry' => 'required|date',
             'contact_number' => 'required|string|max:20',
-            'email' => 'nullable|email',
+            'email' => 'nullable|email|unique:drivers,email',
             'address' => 'nullable|string',
             'date_of_birth' => 'nullable|date',
-            'joining_date' => 'nullable|date',
+            'joining_date' => 'nullable|date|after_or_equal:date_of_birth',
             'safety_score' => 'nullable|integer|min:0|max:100',
             'status' => 'required|in:available,on_trip,off_duty,suspended',
         ];
