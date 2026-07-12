@@ -1,166 +1,325 @@
-# TransitOps — Full Frontend Build Prompt (branch: sarvesh)
+# TransitOps — Phase-by-Phase Build Prompts (from Excalidraw wireframe)
 
-Paste this whole block into Antigravity as one task on the `sarvesh` branch only.
+Source: your Excalidraw file — 9 screens, exact copy/data extracted below. Feed these prompts to Antigravity **one phase at a time**, in order. Each phase assumes the previous one is done. Branch: `sarvesh`. Folder: `frontend/` only. Never touch `backend/`.
+
+Role reference used throughout: logged-in user is **Raven K.**, role badge **"RK"**, default role shown in wireframe = **Dispatcher**. Roles: Fleet Manager, Dispatcher, Safety Officer, Financial Analyst (note: this wireframe uses **Dispatcher**, not "Driver" — use Dispatcher as the exact role name across the whole build).
+
+RBAC matrix (from Screen 8, follow exactly):
+| Role | Fleet | Drivers | Trips | Fuel/Exp. | Analytics |
+|---|---|---|---|---|---|
+| Fleet Manager | ✓ | ✓ | – | – | ✓ |
+| Dispatcher | view | – | ✓ | – | – |
+| Safety Officer | – | ✓ | view | – | – |
+| Financial Analyst | view | – | – | ✓ | ✓ |
+
+(✓ = full access, "view" = read-only, "–" = no access/hidden)
 
 ---
 
-## 0. GIT WORKFLOW — DO THIS FIRST, EVERY SESSION
-
-This repo has 4 people working in parallel. Before touching any code, always sync cleanly:
-
-```bash
-git fetch origin
-git rebase origin/main
-# resolve conflicts if any appear, then:
-git add .
-git rebase --continue
-```
-
-Rules:
-- Never merge into `main`. Never push to `main`. All work stays on `sarvesh`.
-- Never touch anything under `backend/`. If a rebase conflict touches a backend file, do not resolve it yourself — stop and flag it to me instead of guessing.
-- When ready to save progress, always use:
-  ```bash
-  git add .
-  git commit -m "clear, specific message"
-  git push --force-with-lease origin sarvesh
-  ```
-- `--force-with-lease`, never plain `--force` — it protects against overwriting a teammate's push you haven't seen yet.
-- One logical commit per coherent chunk of work (e.g. "scaffold frontend + api client", "vehicle registry CRUD", "trip dispatch flow") — don't squash unrelated work into one commit.
-- If `git rebase origin/main` reports conflicts only inside `frontend/`, resolve them yourself since that's your territory. If conflicts appear inside `backend/`, abort the rebase (`git rebase --abort`) and tell me before doing anything else.
-
-## 1. UNDERSTAND THE BACKEND FIRST (read-only — do not edit anything here)
-
-Before writing any frontend code, spend real time actually reading the backend so the frontend isn't guessing at shapes. Specifically:
-
-- Open `backend/routes/api.php` (or wherever API routes are registered) and list every existing route: method, path, controller, and whether it's behind auth middleware.
-- Open the corresponding controllers in `backend/app/Http/Controllers/` for each route and note the actual request validation rules and the actual JSON response shape (field names, nesting, pagination format) — don't assume Laravel defaults, read the real code.
-- Open `backend/app/Models/` for Vehicle, Driver, Trip, Maintenance, FuelLog/Expense, User (and Role, if it's a separate model or just a column) — note real column names, casts, relationships (e.g. does Trip belong to Vehicle and Driver, does Vehicle have many MaintenanceRecords).
-- Check `backend/database/migrations/` if a model's fields are unclear from the model file alone — migrations are the ground truth for schema.
-- Check how auth is implemented: Sanctum (SPA cookie-based) vs. Sanctum (token-based) vs. Passport vs. custom. Check `backend/config/sanctum.php` and the login/logout controller to see exactly what it expects and returns.
-- Check `backend/config/cors.php` — note whether `http://localhost:3000` is already allowed. If not, don't edit it — tell me so it can be added on the backend side.
-- Produce a short internal note (a comment block at the top of `frontend/src/lib/api/client.ts` is fine) summarizing: auth mechanism used, token storage expectation, and a table of real endpoints you found (method, path, purpose) — this becomes the contract the rest of the frontend is built against. Do not invent endpoints that don't exist; if something in the spec (e.g. CSV export) has no backend route yet, flag it explicitly instead of building against a guessed URL.
-
-## 2. SCOPE FOR THIS TASK
-
-Build the complete TransitOps frontend inside a `frontend/` folder at the project root (create it if it doesn't exist yet on this branch), following the functional spec below, wired to the real backend contract you just discovered. Do not touch `backend/` at any point.
-
-## 3. TECH STACK
-
-- Next.js 15, App Router, TypeScript strict
-- React 19 — Server Components by default, Client Components only where interactivity is required
-- Tailwind CSS with custom design tokens (no default template look)
-- Radix UI primitives (dialog, dropdown, tabs, select, tooltip, toast) — fully custom-styled
-- TanStack Table (data grids) + TanStack Query (server state)
-- React Hook Form + Zod (forms/validation)
-- Recharts (dashboard charts)
-- Auth wiring matched to whatever you found in Step 1 (Sanctum cookie session vs. Bearer token) — do not assume, use what's actually there
-- date-fns
-- npm
-
-No admin-dashboard template kits, no MUI/Ant/Chakra, no pre-themed shadcn blocks — Radix + your own Tailwind only.
-
-## 4. DESIGN APPROACH
-
-- Use whatever design/prototyping tools and skills you have available (e.g. a design-system skill, a Stitch-style or frontend-design skill, or a "design-task-frontend" workflow if configured in this environment) to establish the visual direction *before* writing component code: define the color tokens, type scale, spacing scale, and component states (default/hover/active/disabled/loading/error/empty) once, in one place, and reuse them everywhere. Don't restyle each page ad hoc.
-- Direction: a confident, data-dense "control room" feel appropriate for fleet operations — one accent color (not default Tailwind blue), consistent semantic status colors (green = Available/Completed, amber = Pending/expiring-soon, red = Suspended/Expired/Retired) used identically across every module.
-- Typography via `next/font`: one distinctive heading face, one clean body face, defined once in `tailwind.config.ts`.
-- Build shared primitives once in `components/ui/` (Button, Input, Select, Dialog, Table shell, Badge, Toast, Skeleton, EmptyState) and reuse across every module — never duplicate a styled button or badge in a feature folder.
-
-## 5. FOLDER STRUCTURE
+## PHASE 0 — Auth Screen
 
 ```
-frontend/
-├── src/
-│   ├── app/
-│   │   ├── (auth)/login/page.tsx
-│   │   ├── (auth)/layout.tsx
-│   │   ├── (dashboard)/layout.tsx
-│   │   ├── (dashboard)/page.tsx
-│   │   ├── (dashboard)/vehicles/page.tsx
-│   │   ├── (dashboard)/vehicles/[id]/page.tsx
-│   │   ├── (dashboard)/drivers/page.tsx
-│   │   ├── (dashboard)/drivers/[id]/page.tsx
-│   │   ├── (dashboard)/trips/page.tsx
-│   │   ├── (dashboard)/trips/new/page.tsx
-│   │   ├── (dashboard)/trips/[id]/page.tsx
-│   │   ├── (dashboard)/maintenance/page.tsx
-│   │   ├── (dashboard)/fuel-expenses/page.tsx
-│   │   ├── (dashboard)/reports/page.tsx
-│   │   ├── (dashboard)/settings/users/page.tsx
-│   │   ├── layout.tsx
-│   │   └── globals.css
-│   ├── components/
-│   │   ├── ui/
-│   │   ├── layout/          # Sidebar, Topbar, RoleGate
-│   │   └── charts/
-│   ├── lib/
-│   │   ├── api/
-│   │   │   ├── client.ts    # base fetch wrapper + the backend-contract summary comment from Step 1
-│   │   │   ├── vehicles.ts
-│   │   │   ├── drivers.ts
-│   │   │   ├── trips.ts
-│   │   │   ├── maintenance.ts
-│   │   │   ├── fuel-expenses.ts
-│   │   │   ├── reports.ts
-│   │   │   └── auth.ts
-│   │   ├── validators/      # zod schemas per entity
-│   │   ├── constants.ts
-│   │   └── utils.ts
-│   ├── hooks/                # useVehicles, useDrivers, useTrips, useMaintenance, useFuelExpenses, useReports, useAuth
-│   ├── types/                 # vehicle.ts, driver.ts, trip.ts, maintenance.ts, fuel-expense.ts, user.ts, api.ts
-│   ├── providers/             # query-provider, auth-provider, toast-provider
-│   └── middleware.ts
-├── public/
-├── .env.local.example
-├── next.config.ts
-├── tailwind.config.ts
-├── tsconfig.json
-├── package.json
-└── README.md
+Build the login screen for TransitOps in frontend/src/app/(auth)/login/page.tsx, matching this exact wireframe content:
+
+Left panel (branding): "TransitOps" wordmark, tagline "Smart Transport Operations Platform", 
+subheading "One login, four roles:" followed by four role chips: Fleet Manager, Dispatcher, 
+Safety Officer, Financial Analyst. Footer: "TRANSITOPS © 2026 · RBAC ENABLED".
+
+Right panel (form): heading "Sign in to your account", subtext "Enter your credentials to 
+continue". Fields: EMAIL (placeholder "Raven.k@transitops.in"), PASSWORD (masked), 
+ROLE (RBAC) as a select dropdown defaulting to "Dispatcher". "Remember me" checkbox, 
+"Forgot password?" link. Primary button: "Sign In".
+
+Below the form, a small access-scope note: "Access is scoped by role after login:" followed by:
+• Fleet Manager → Fleet, Maintenance
+• Dispatcher → Dashboard, Trips
+• Safety Officer → Drivers, Compliance
+• Financial Analyst → Fuel & Expenses, Analytics
+
+Error state to implement: on invalid credentials, show "❌ Invalid credentials." Also implement 
+account lockout messaging: "Account locked after 5 failed attempts." after 5 consecutive failures 
+(track failed attempts client-side for the UI state; real lockout enforcement is the backend's job — 
+just reflect whatever the backend returns).
+
+Wire this to the real Laravel auth endpoint (inspect backend/routes/api.php and the auth controller 
+first, read-only, to get the real request/response shape — do not guess it). Use the design-taste-frontend 
+skill and frontend-design skill to set the token system (colors, type, spacing) here first, since every 
+later screen reuses it. This is the foundation screen — get the visual language right before moving to 
+Phase 1.
 ```
 
-## 6. AUTH & RBAC
+---
 
-Roles: Fleet Manager, Driver, Safety Officer, Financial Analyst.
+## PHASE 1 — Dashboard
 
-- Wire login/logout/session using exactly the mechanism found in Step 1 — do not guess.
-- `middleware.ts` redirects unauthenticated users to `/login`.
-- Route-group access: `settings/users` → Fleet Manager only. `reports` → Financial Analyst + Fleet Manager. `trips/new` → Driver + Fleet Manager. Safety Officer gets full visibility into drivers/compliance, read access elsewhere.
-- Hide nav items the current role can't access AND guard the route itself (both layers).
+```
+Build the Dashboard at frontend/src/app/(dashboard)/page.tsx, matching this wireframe exactly.
 
-## 7. DASHBOARD
+Persistent shell (used on every screen from here on — build it once in components/layout/):
+- Left sidebar nav: TransitOps logo, then: Dashboard, Fleet, Drivers, Trips, Maintenance, 
+  Fuel & Expenses, Analytics, Settings.
+- Top bar: Search input (placeholder "Search..."), user block showing "Raven K." + role label 
+  ("Dispatcher" from session) + avatar initials "RK".
+- Nav items must hide/show per the RBAC matrix in the header of this document, based on logged-in role.
 
-KPI cards: Active Vehicles, Available Vehicles, Vehicles in Maintenance, Active Trips, Pending Trips, Drivers On Duty, Fleet Utilization (%).
-Filter bar: vehicle type, status, region — client component, re-fetches via TanStack Query.
-Two Recharts visuals: utilization trend + status breakdown, styled to the custom token set, not default Recharts look.
+Dashboard content:
+- FILTERS row: Vehicle Type: All (dropdown), Status: All (dropdown), Region: All (dropdown).
+- KPI card grid, exact labels and current wireframe sample values (real values come from API, 
+  these are just the reference layout):
+  ACTIVE VEHICLES (53), AVAILABLE VEHICLES (42), VEHICLES IN MAINTENANCE (05), 
+  ACTIVE TRIPS (18), PENDING TRIPS (09), DRIVERS ON DUTY (26), FLEET UTILIZATION (81%).
+- "RECENT TRIPS" table with columns: TRIP, VEHICLE, DRIVER, STATUS, ETA. Sample rows from wireframe:
+  TR001 / VAN-05 / Alex / On Trip / 45 min
+  TR002 / TRK-12 / John / Completed / —
+  TR003 / MINI-08 / Priya / Dispatched / 1h 10m
+  TR006 / — / — / Draft / "Awaiting vehicle"
+  Status badges must use consistent colors across the whole app (define once): 
+  Available/Completed = green, On Trip/Dispatched = blue or amber (pick one, stay consistent), 
+  Pending/Draft = neutral/amber, Suspended/Retired/Cancelled = red.
+- "VEHICLE STATUS" legend/breakdown: Available, On Trip, In Shop, Retired — as a small chart or 
+  breakdown widget (Recharts), styled to the token system from Phase 0.
 
-## 8. MODULES — BUILD IN THIS ORDER
+Wire KPIs and the trips table to real backend endpoints (discover exact routes/response shape by 
+reading backend/routes/api.php + controllers, read-only). Use TanStack Query. Apply RBAC: only 
+Fleet Manager and Financial Analyst should see full analytics-adjacent widgets per the matrix — 
+Dispatcher gets Dashboard access per the access-scope note in Phase 0, so this full dashboard is fine 
+for Dispatcher, but double check the RBAC matrix for what's visible if a Safety Officer or Financial 
+Analyst lands here.
+```
 
-1. **Auth** — login page + session wiring.
-2. **Vehicle Registry** — TanStack Table: Reg No (unique), Name/Model, Type, Max Load, Odometer, Acquisition Cost, Status (Available/On Trip/In Shop/Retired, color-coded). Create/edit modal, Zod-validated. Detail page: linked trips, maintenance, fuel logs.
-3. **Driver Management** — Name, License No, License Category, License Expiry (flag <30 days and expired distinctly), Contact, Safety Score, Status (Available/On Trip/Off Duty/Suspended).
-4. **Trip Management** — lifecycle board (Draft → Dispatched → Completed → Cancelled). New Trip wizard: source, destination, only *available* vehicles, only *available, non-suspended, non-expired-license* drivers, cargo weight (client-side check against selected vehicle's max load, backend remains final authority), planned distance. Dispatch/Complete/Cancel call real backend endpoints; reflect status via TanStack Query mutations + refetch.
-5. **Maintenance** — create maintenance record for a vehicle; render backend-driven status flip to In Shop, don't compute it client-side.
-6. **Fuel & Expense Management** — log fuel (liters, cost, date) and expenses (tolls etc.); show total operational cost per vehicle exactly as the API returns it.
-7. **Reports & Analytics** — Fuel Efficiency (Distance/Fuel), Fleet Utilization, Operational Cost, Vehicle ROI `(Revenue − (Maintenance + Fuel)) / Acquisition Cost`. CSV export client-side from fetched data. PDF export: disabled button with "coming soon" tooltip (bonus, skip for now).
+---
 
-## 9. API INTEGRATION
+## PHASE 2 — Vehicle Registry (Fleet)
 
-- Base URL from `NEXT_PUBLIC_API_URL` only — never hardcode a host in a component.
-- One thin `lib/api/<entity>.ts` per entity, one matching `hooks/use-<entity>.ts` — components call hooks only, never `lib/api` directly.
-- Shared error-parsing utility for Laravel's typical `{ message, errors: { field: [...] } }` shape so every form surfaces field errors the same way.
+```
+Build frontend/src/app/(dashboard)/vehicles/page.tsx ("Fleet" in nav), matching this wireframe exactly.
 
-## 10. VERIFICATION BEFORE CALLING ANYTHING DONE
+Header actions: "+ Add Vehicle" button (top right). Filters: Type: All (dropdown), Status: All 
+(dropdown), search input "Search reg. no...".
 
-- `cd frontend && npm install && npm run dev` runs clean on port 3000.
-- RBAC actually hides/blocks per role — check all four roles.
-- Dispatch dropdowns actually filter to available-only vehicles/drivers.
-- Every form validates before submit and surfaces real backend validation errors.
-- Note any gaps (missing backend endpoint, unclear auth flow, CORS not yet allowing localhost:3000) briefly at the end — don't silently fake a whole module if a backend route is missing.
+Table columns exactly: REG. NO. (UNIQUE), NAME/MODEL, TYPE, CAPACITY, ODOMETER, ACQ. COST, STATUS.
+Sample wireframe rows (reference layout only, real data from API):
+GJ01AB4521 / VAN-05 / Van / 500 kg / 74,000 / 6,20,000 / Available
+GJ01AB9981 / TRUCK-11 / Truck / 5 Ton / 182,000 / 24,50,000 / On Trip
+GJ01AB1120 / MINI-03 / Mini / 1 Ton / 66,000 / 4,10,000 / In Shop
+GJ01AB0087 / VAN-09 / Van / 750 kg / 241,900 / 5,90,000 / Retired
 
-## 11. OUT OF SCOPE
+Note the acquisition cost format uses Indian numbering (lakhs, e.g. "6,20,000") — format currency 
+display accordingly (INR, Indian digit grouping), not US-style commas.
 
-- Anything in `backend/`.
-- Bonus items (email reminders, document management, dark mode, PDF export) — come back to me before starting any of these.
-- Merging or pushing to `main` — everything stays on `sarvesh`, pushed with `--force-with-lease` per the workflow in section 0.
+Rule banner to display somewhere visible on this screen (as a small info note, not a modal): 
+"Rule: Registration No. must be unique · Retired/In Shop vehicles are hidden from Trip Dispatcher"
+
+"+ Add Vehicle" opens a create/edit modal (Radix Dialog) with Zod validation for all the table 
+fields above. Status values are exactly: Available, On Trip, In Shop, Retired — don't invent others.
+
+RBAC per the matrix: Fleet Manager gets full ✓ access here (add/edit), Dispatcher gets "view" only 
+(hide the Add/Edit actions for Dispatcher), Safety Officer has no access (redirect/hide from nav), 
+Financial Analyst gets "view" only.
+
+Also build the vehicle detail page at vehicles/[id]/page.tsx showing linked trips, maintenance 
+records, and fuel logs for that vehicle (these come from later phases' data — stub the sections now, 
+wire real data once Phases 4–6 exist).
+```
+
+---
+
+## PHASE 3 — Drivers & Safety Profiles
+
+```
+Build frontend/src/app/(dashboard)/drivers/page.tsx ("Drivers" in nav), matching this wireframe exactly.
+
+Header action: "+ Add Driver".
+
+Table columns exactly: DRIVER, LICENSE NO., CATEGORY, EXPIRY, CONTACT, TRIP COMPL., SAFETY, STATUS.
+Sample wireframe rows:
+Alex / DL-88213 / LMV / 12/2028 / 98765xxxxx / 96% / — / Available
+John / DL-44120 / HMV / "03/2025 EXPIRED" / 98220xxxxx / 81% / — / Suspended
+Priya / DL-77031 / LMV / 08/2027 / 99110xxxxx / 99% / — / On Trip
+Suresh / DL-90045 / HMV / 01/2027 / 97440xxxxx / 88% / — / Off Duty
+
+Note: the wireframe shows two adjacent status-like columns for some rows (e.g. Suresh shows 
+"Available" then "Off Duty") — treat the rightmost as the authoritative Status column; the SAFETY 
+column is the safety score percentage.
+
+EXPIRY column must visually flag expired licenses distinctly (red/destructive styling + literal 
+"EXPIRED" label as shown for John) and flag licenses expiring within 30 days with a warning (amber) 
+style — this is a client-side date comparison against "today", not a guess.
+
+A "TOGGLE STATUS" control (dropdown or segmented control) with exactly these values: Available, 
+On Trip, Off Duty, Suspended.
+
+Rule banner: "Rule: Expired license or Suspended status → blocked from trip assignment" — display 
+as an info note on this screen.
+
+RBAC: Safety Officer gets ✓ full access (add/edit/toggle status). Fleet Manager gets ✓ full access too. 
+Dispatcher has no access (hidden from nav). Financial Analyst has no access.
+
+Driver detail page at drivers/[id]/page.tsx: trip history and compliance info, stub for now.
+```
+
+---
+
+## PHASE 4 — Trip Dispatcher
+
+```
+Build frontend/src/app/(dashboard)/trips/page.tsx and trips/new/page.tsx ("Trips" in nav), matching 
+this wireframe exactly.
+
+TRIP LIFECYCLE indicator at the top: Draft → Dispatched → Completed → Cancelled (as a stepper/pill 
+row, purely a visual lifecycle indicator, not necessarily clickable).
+
+"CREATE TRIP" panel/form (this is trips/new):
+Fields exactly: SOURCE (text, e.g. "Gandhinagar Depot"), DESTINATION (text, e.g. "Ahmedabad Hub"), 
+VEHICLE (AVAILABLE ONLY) — dropdown showing only vehicles with status = Available, displayed like 
+"VAN-05 - 500 kg capacity", DRIVER (AVAILABLE ONLY) — dropdown showing only drivers with status = 
+Available AND non-expired license AND not Suspended, CARGO WEIGHT (KG) numeric input, PLANNED 
+DISTANCE (KM) numeric input.
+
+Live capacity check display exactly like the wireframe: show "Vehicle Capacity: 500 kg" and 
+"Cargo Weight: 700 kg" side by side, and when cargo exceeds capacity show the exact error: 
+"❌ Capacity exceeded by 200 kg — dispatch blocked" and disable the Dispatch button (show it as 
+"Dispatch (disabled)" in that state). "Cancel" button always available.
+
+This capacity check should run client-side for instant feedback as the user types, but the actual 
+dispatch call still goes to the backend, which is the final authority — surface backend validation 
+errors the same way if they differ from the client-side check.
+
+"LIVE BOARD" section (this is the main trips/page.tsx list view) showing active trips as cards, 
+matching wireframe sample data:
+TR001 — VAN-05 / ALEX — "Gandhinagar Depot -> Ahmedabad Hub" — Dispatched — 45 min
+TR004 — TRUCK-04 / SURESH — "Vatva Industrial Area -> Sanand Warehouse" — Draft — "Awaiting driver"
+TR006 — Unassigned — "Mansa -> Kalol Depot" — Cancelled — "Vehicle went to shop"
+
+Footer note on this screen: "On Complete: odometer -> fuel log -> expenses -> Vehicle & Driver 
+Available" — display this as a small process note, and implement a "Complete Trip" action that 
+prompts for final odometer reading and fuel consumed when completing a dispatched trip (per this 
+note and the original spec's example workflow).
+
+RBAC: Dispatcher gets ✓ full access (create/dispatch/complete/cancel). Fleet Manager: no direct 
+access per the matrix ("–" for Trips) — hide trip creation for Fleet Manager, but confirm this 
+against Phase 0's access-scope note which said Fleet Manager → "Fleet, Maintenance" (no Trips) — 
+this is consistent, follow the RBAC matrix as authoritative. Safety Officer gets "view" only. 
+Financial Analyst: no access.
+```
+
+---
+
+## PHASE 5 — Maintenance
+
+```
+Build frontend/src/app/(dashboard)/maintenance/page.tsx ("Maintenance" in nav), matching this 
+wireframe exactly.
+
+"LOG SERVICE RECORD" form: VEHICLE (dropdown, e.g. "VAN-05"), SERVICE TYPE (text/dropdown, e.g. 
+"Oil Change"), COST (numeric, e.g. 2500), DATE (date picker, e.g. 07/07/2026), STATUS (e.g. "Active"), 
+"Save" button.
+
+Status-flow visual matching the wireframe: show a small before/after indicator — 
+"Available" → (creating active record) → "In Shop", and separately 
+"In Shop" → (closing record, not retired) → "Available" 
+— these are informational diagrams showing what the backend does automatically when a maintenance 
+record is created/closed; do not compute this status flip client-side, just render what the API 
+returns after the mutation and refetch the vehicle list.
+
+Note to display: "Note: In Shop vehicles are removed from the dispatch pool."
+
+"SERVICE LOG" table, columns: VEHICLE, SERVICE, COST, STATUS. Sample rows:
+VAN-05 / Oil Change / 2,500 / In Shop
+TRUCK-11 / Engine Repair / 18,000 / Completed
+MINI-03 / Tyre Replace / 6,200 / In Shop
+
+RBAC: Fleet Manager gets ✓ full access. Everyone else per the matrix has no explicit Maintenance 
+column shown, but Phase 0's access-scope note ties Maintenance to Fleet Manager only — restrict 
+this whole screen to Fleet Manager, hide it from nav for other roles.
+```
+
+---
+
+## PHASE 6 — Fuel & Expense Management
+
+```
+Build frontend/src/app/(dashboard)/fuel-expenses/page.tsx ("Fuel & Expenses" in nav), matching this 
+wireframe exactly.
+
+Header actions: "+ Log Fuel", "+ Add Expense".
+
+"FUEL LOGS" table, columns: VEHICLE, DATE, LITERS, FUEL COST. Sample rows:
+VAN-05 / 05 Jul 2026 / 42 L / 3,150
+TRUCK-11 / 06 Jul 2026 / 110 L / 8,400
+MINI-08 / 06 Jul 2026 / 28 L / 2,050
+
+"OTHER EXPENSES (TOLL / MISC)" table, columns: TRIP, VEHICLE, TOLL, OTHER, MAINT. (LINKED), TOTAL 
+(this TOTAL column actually shows vehicle status per the wireframe sample — treat that as the 
+wireframe's shorthand; build the real column as the computed per-row total, and keep vehicle status 
+visible elsewhere on the row if useful). Sample rows:
+TR001 / VAN-05 / 120 / 0 / 0 / (status: Available)
+TR002 / TRK-12 / 340 / 150 / 18,000 / (status: Completed)
+
+Bottom summary bar: "TOTAL OPERATIONAL COST (AUTO) = FUEL + MAINTENANCE" with the computed total 
+displayed prominently (wireframe shows 34,070 as sample) — this must come from the real API 
+computation, not a client-side sum, per the original functional spec ("Automatically compute total 
+operational cost").
+
+RBAC: Financial Analyst gets ✓ full access. Fleet Manager: no explicit access in the matrix — hide 
+for Fleet Manager. Dispatcher and Safety Officer: no access, hidden from nav.
+```
+
+---
+
+## PHASE 7 — Reports & Analytics
+
+```
+Build frontend/src/app/(dashboard)/reports/page.tsx ("Analytics" in nav), matching this wireframe 
+exactly.
+
+Header action: "Export CSV".
+
+KPI cards exactly: FUEL EFFICIENCY (8.4 km/l sample), FLEET UTILIZATION (81% sample), OPERATIONAL 
+COST (34,070 sample), VEHICLE ROI (14.2% sample) — with the formula note directly under/near the 
+ROI card: "ROI = (Revenue − (Maintenance + Fuel)) / Acquisition Cost".
+
+"MONTHLY REVENUE" chart (Recharts line or bar, styled to the token system).
+
+"TOP COSTLIEST VEHICLES" chart/list — sample entries: TRUCK-11, MINI-03, VAN-05 (ranked, so build 
+as a ranked bar chart or ranked list, whichever reads cleaner with the token system).
+
+"Export CSV" button generates a CSV client-side from the fetched report data (small utility, no 
+extra library needed). PDF export is explicitly out of scope for this phase — do not build it.
+
+RBAC: Fleet Manager gets ✓, Financial Analyst gets ✓. Dispatcher and Safety Officer: no access, 
+hidden from nav.
+```
+
+---
+
+## PHASE 8 — Settings & RBAC
+
+```
+Build frontend/src/app/(dashboard)/settings/users/page.tsx ("Settings" in nav — this is the RBAC 
+config screen from the wireframe), matching this wireframe exactly.
+
+"GENERAL" section: DEPOT NAME (text, e.g. "Gandhinagar Depot GJ4"), CURRENCY (fixed to "INR (Rs)" — 
+this app is INR-only, don't build a currency switcher), DISTANCE UNIT (fixed to "Kilometers"), 
+"Save changes" button.
+
+"ROLE-BASED ACCESS (RBAC)" table — render the exact matrix from the top of this document as a 
+read-only reference table on this screen (columns: ROLE, FLEET, DRIVERS, TRIPS, FUEL/EXP., 
+ANALYTICS; values: ✓ / view / –). This table is documentation of the enforced RBAC rules, not itself 
+an editable permissions UI unless the backend actually exposes an endpoint to change role 
+permissions — check Step-1-style backend discovery for this; if no such endpoint exists, keep this 
+table display-only and say so.
+
+RBAC: this whole screen is Fleet Manager only (settings/administration). Hide "Settings" from nav 
+for every other role.
+```
+
+---
+
+## AFTER ALL 8 PHASES
+
+Run the verification pass from your main build prompt: RBAC actually hides/blocks per role across 
+all 9 screens, all forms validate, all status colors are consistent everywhere, `npm run dev` runs 
+clean. Commit each phase separately (`git add . && git commit -m "..." && git push --force-with-lease 
+origin sarvesh`) rather than one giant commit — this matches your team's rebase workflow and makes 
+conflict resolution with your 3 teammates far less painful.

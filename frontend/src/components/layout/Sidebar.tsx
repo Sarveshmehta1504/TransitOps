@@ -32,14 +32,14 @@ export default function Sidebar() {
   };
 
   const navItems = [
-    { label: "Dashboard", href: "/", icon: LayoutDashboard, allowed: ["Fleet Manager", "Driver", "Safety Officer", "Financial Analyst"] },
-    { label: "Vehicles", href: "/vehicles", icon: Truck, allowed: ["Fleet Manager", "Driver", "Safety Officer", "Financial Analyst"] },
-    { label: "Drivers", href: "/drivers", icon: Users, allowed: ["Fleet Manager", "Driver", "Safety Officer", "Financial Analyst"] },
-    { label: "Trips", href: "/trips", icon: Compass, allowed: ["Fleet Manager", "Driver", "Safety Officer", "Financial Analyst"] },
-    { label: "Maintenance", href: "/maintenance", icon: Wrench, allowed: ["Fleet Manager", "Driver", "Safety Officer", "Financial Analyst"] },
-    { label: "Fuel & Expenses", href: "/fuel-expenses", icon: Fuel, allowed: ["Fleet Manager", "Driver", "Safety Officer", "Financial Analyst"] },
-    { label: "Reports & ROI", href: "/reports", icon: BarChart3, allowed: ["Fleet Manager", "Financial Analyst"] },
-    { label: "Users & Settings", href: "/settings/users", icon: Settings, allowed: ["Fleet Manager"] },
+    { label: "Dashboard", href: "/", icon: LayoutDashboard, allowed: ["Fleet Manager", "Dispatcher", "Safety Officer", "Financial Analyst"] },
+    { label: "Fleet", href: "/vehicles", icon: Truck, allowed: ["Fleet Manager", "Dispatcher", "Financial Analyst"] },
+    { label: "Drivers", href: "/drivers", icon: Users, allowed: ["Fleet Manager", "Safety Officer"] },
+    { label: "Trips", href: "/trips", icon: Compass, allowed: ["Dispatcher", "Safety Officer"] },
+    { label: "Maintenance", href: "/maintenance", icon: Wrench, allowed: ["Fleet Manager"] },
+    { label: "Fuel & Expenses", href: "/fuel-expenses", icon: Fuel, allowed: ["Financial Analyst"] },
+    { label: "Analytics", href: "/reports", icon: BarChart3, allowed: ["Fleet Manager", "Financial Analyst"] },
+    { label: "Settings", href: "/settings/users", icon: Settings, allowed: ["Fleet Manager"] },
   ];
 
   return (

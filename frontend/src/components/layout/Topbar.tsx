@@ -15,7 +15,7 @@ export default function Topbar() {
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
           <input
             type="text"
-            placeholder="Search operations..."
+            placeholder="Search..."
             className="pl-9 pr-4 py-2 text-xs bg-slate-900 border border-slate-800 rounded-xl text-slate-300 focus:outline-none focus:border-indigo-500/50 w-64 placeholder-slate-500"
           />
         </div>
@@ -39,10 +39,16 @@ export default function Topbar() {
           <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-indigo-500" />
         </button>
 
-        {user?.role === "Fleet Manager" && (
-          <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-300 px-3 py-1.5 rounded-xl text-xs font-semibold">
-            <ShieldAlert className="h-4 w-4 text-amber-400 shrink-0" />
-            <span>Control Mode</span>
+        {/* User Block */}
+        {user && (
+          <div className="flex items-center gap-3 border-l border-slate-900 pl-4">
+            <div className="text-right hidden sm:block">
+              <p className="text-xs font-semibold text-slate-200">{user.name}</p>
+              <p className="text-[10px] text-slate-500 font-medium mt-0.5">{user.role}</p>
+            </div>
+            <div className="h-9 w-9 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 text-xs shrink-0 select-none">
+              {user.name === "Raven K." ? "RK" : user.name.split(" ").map(n => n[0]).join("")}
+            </div>
           </div>
         )}
       </div>

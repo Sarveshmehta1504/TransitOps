@@ -2,10 +2,10 @@ import { request } from "./client";
 import { User, UserRole } from "@/types/user";
 
 export const MOCK_USERS: User[] = [
-  { id: 1, name: "Marcus Vance", email: "manager@transitops.com", role: "Fleet Manager", created_at: "2025-01-10", updated_at: "2025-01-10" },
-  { id: 2, name: "Elena Rostova", email: "driver@transitops.com", role: "Driver", created_at: "2025-02-14", updated_at: "2025-02-14" },
-  { id: 3, name: "Dominic Torres", email: "safety@transitops.com", role: "Safety Officer", created_at: "2025-03-01", updated_at: "2025-03-01" },
-  { id: 4, name: "Clara Oswald", email: "analyst@transitops.com", role: "Financial Analyst", created_at: "2024-08-20", updated_at: "2024-08-20" },
+  { id: 1, name: "Marcus Vance", email: "manager@transitops.in", role: "Fleet Manager", created_at: "2025-01-10", updated_at: "2025-01-10" },
+  { id: 2, name: "Raven K.", email: "Raven.k@transitops.in", role: "Dispatcher", created_at: "2025-02-14", updated_at: "2025-02-14" },
+  { id: 3, name: "Dominic Torres", email: "safety@transitops.in", role: "Safety Officer", created_at: "2025-03-01", updated_at: "2025-03-01" },
+  { id: 4, name: "Clara Oswald", email: "analyst@transitops.in", role: "Financial Analyst", created_at: "2024-08-20", updated_at: "2024-08-20" },
 ];
 
 export async function login(email: string, roleInput?: UserRole): Promise<{ token: string; user: User }> {

@@ -1,262 +1,255 @@
 "use client";
 
 import React, { useState } from "react";
-import { useVehicles } from "@/hooks/useVehicles";
-import { useDrivers } from "@/hooks/useDrivers";
-import { useTrips } from "@/hooks/useTrips";
+import { useAuthContext } from "@/providers/auth-provider";
 import {
   Truck,
   Users,
   Compass,
   Wrench,
   Percent,
-  TrendingUp,
-  MapPin,
-  Filter,
+  AlertTriangle,
+  Clock,
 } from "lucide-react";
-import { formatCurrency, formatNumber } from "@/lib/utils";
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
   BarChart,
   Bar,
   Cell,
-  Legend,
+  XAxis,
+  YAxis,
+  Tooltip,
 } from "recharts";
 
 export default function DashboardPage() {
-  const { vehicles, isLoading: loadingVehicles } = useVehicles();
-  const { drivers, isLoading: loadingDrivers } = useDrivers();
-  const { trips, isLoading: loadingTrips } = useTrips();
+  const { role } = useAuthContext();
 
   // Filters State
-  const [vehicleTypeFilter, setVehicleTypeFilter] = useState<string>("All");
-  const [regionFilter, setRegionFilter] = useState<string>("All");
+  const [vehicleType, setVehicleType] = useState("All");
+  const [status, setStatus] = useState("All");
+  const [region, setRegion] = useState("All");
 
-  if (loadingVehicles || loadingDrivers || loadingTrips) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="h-8 w-48 bg-slate-900 animate-pulse rounded-lg" />
-          <div className="h-10 w-32 bg-slate-900 animate-pulse rounded-lg" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-28 bg-slate-900 animate-pulse rounded-2xl" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 h-96 bg-slate-900 animate-pulse rounded-2xl" />
-          <div className="h-96 bg-slate-900 animate-pulse rounded-2xl" />
-        </div>
-      </div>
-    );
-  }
-
-  // Filtered lists
-  const filteredVehicles = vehicles.filter((v) => {
-    if (vehicleTypeFilter !== "All" && v.type !== vehicleTypeFilter) return false;
-    return true;
-  });
-
-  // Calculate Metrics
-  const totalVehiclesCount = filteredVehicles.length;
-  const availableVehiclesCount = filteredVehicles.filter(v => v.status === "available").length;
-  const inShopVehiclesCount = filteredVehicles.filter(v => v.status === "in_shop").length;
-  const activeVehiclesCount = filteredVehicles.filter(v => v.status === "on_trip").length;
-
-  const totalDriversCount = drivers.length;
-  const activeDriversCount = drivers.filter(d => d.status === "on_trip").length;
-  
-  const pendingTripsCount = trips.filter(t => t.status === "dispatched").length;
-  const activeTripsCount = trips.filter(t => t.status === "dispatched").length;
-
-  // Fleet Utilization (%) = (Active Vehicles / Total Vehicles) * 100
-  const utilization = totalVehiclesCount > 0 ? (activeVehiclesCount / totalVehiclesCount) * 100 : 0;
-
-  // Recharts Chart 1: Utilization Trend Data (Weekly Mock Data)
-  const utilizationTrend = [
-    { day: "Mon", rate: 58 },
-    { day: "Tue", rate: 64 },
-    { day: "Wed", rate: 75 },
-    { day: "Thu", rate: utilization > 0 ? Math.round(utilization) : 60 },
-    { day: "Fri", rate: 70 },
-    { day: "Sat", rate: 45 },
-    { day: "Sun", rate: 38 },
+  // Wireframe Sample Recent Trips
+  const recentTrips = [
+    { id: "TR001", vehicle: "VAN-05", driver: "Alex", status: "On Trip", eta: "45 min" },
+    { id: "TR002", vehicle: "TRK-12", driver: "John", status: "Completed", eta: "-" },
+    { id: "TR003", vehicle: "MINI-08", driver: "Priya", status: "Dispatched", eta: "1h 10m" },
+    { id: "TR006", vehicle: "-", driver: "-", status: "Draft", eta: "Awaiting vehicle" },
   ];
+
+  const getStatusStyle = (statusStr: string) => {
+    switch (statusStr.toLowerCase()) {
+      case "available":
+      case "completed":
+        return "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+      case "on trip":
+      case "dispatched":
+        return "text-blue-400 bg-blue-500/10 border-blue-500/20";
+      case "pending":
+      case "draft":
+        return "text-amber-400 bg-amber-500/10 border-amber-500/20";
+      case "suspended":
+      case "retired":
+      case "cancelled":
+        return "text-rose-400 bg-rose-500/10 border-rose-500/20";
+      default:
+        return "text-slate-400 bg-slate-500/10 border-slate-500/20";
+    }
+  };
 
   // Recharts Chart 2: Status Breakdown
   const statusBreakdown = [
-    { name: "Available", value: availableVehiclesCount, color: "#10b981" },
-    { name: "On Trip", value: activeVehiclesCount, color: "#3b82f6" },
-    { name: "In Shop", value: inShopVehiclesCount, color: "#f59e0b" },
-    { name: "Retired", value: filteredVehicles.filter(v => v.status === "retired").length, color: "#64748b" },
+    { name: "Available", value: 42, color: "#10b981" },
+    { name: "On Trip", value: 18, color: "#3b82f6" },
+    { name: "In Shop", value: 5, color: "#f59e0b" },
+    { name: "Retired", value: 8, color: "#64748b" },
   ];
 
-  const vehicleTypes = Array.from(new Set(vehicles.map((v) => v.type)));
+  // RBAC Widget checks
+  const canSeeAnalytics = role === "Fleet Manager" || role === "Financial Analyst";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 select-none">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            Operations Center
-          </h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Real-time fleet utilization, driver assignments, and vehicle logistics logs.
-          </p>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+          Dashboard
+        </h1>
+        <p className="text-slate-400 text-sm mt-1">
+          Real-time operations center and logistics monitoring.
+        </p>
+      </div>
+
+      {/* FILTERS row */}
+      <div className="flex flex-wrap items-center gap-4 bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
+        <div className="flex items-center gap-1.5 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+          <span>Filters:</span>
         </div>
-
-        {/* Filter Toolbar */}
-        <div className="flex flex-wrap items-center gap-3 bg-slate-900/60 border border-slate-800 p-2 rounded-2xl">
-          <div className="flex items-center gap-2 text-slate-400 px-2 text-xs font-semibold uppercase tracking-wider">
-            <Filter className="h-3.5 w-3.5" />
-            <span>Filter By:</span>
-          </div>
-
-          {/* Vehicle Type Filter */}
+        <div className="flex flex-wrap gap-3">
           <select
-            value={vehicleTypeFilter}
-            onChange={(e) => setVehicleTypeFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:border-indigo-500"
+            value={vehicleType}
+            onChange={(e) => setVehicleType(e.target.value)}
+            className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
           >
-            <option value="All">All Types</option>
-            {vehicleTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
+            <option value="All">Vehicle Type: All</option>
+            <option value="Semi-Truck">Semi-Truck</option>
+            <option value="Box Truck">Box Truck</option>
+            <option value="Flatbed">Flatbed</option>
+          </select>
+
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
+          >
+            <option value="All">Status: All</option>
+            <option value="available">Available</option>
+            <option value="on_trip">On Trip</option>
+            <option value="in_shop">In Shop</option>
+          </select>
+
+          <select
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            className="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
+          >
+            <option value="All">Region: All</option>
+            <option value="North">North</option>
+            <option value="South">South</option>
+            <option value="East">East</option>
+            <option value="West">West</option>
           </select>
         </div>
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Fleet Utilization */}
-        <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex items-center gap-4 relative overflow-hidden">
-          <div className="h-12 w-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
-            <Percent className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Fleet Utilization
-            </p>
-            <h3 className="text-2xl font-bold font-mono text-slate-100 mt-1">
-              {utilization.toFixed(1)}%
-            </h3>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         {/* Active Vehicles */}
-        <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex items-center gap-4 relative overflow-hidden">
-          <div className="h-12 w-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
-            <Truck className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Active Vehicles
-            </p>
-            <h3 className="text-2xl font-bold font-mono text-slate-100 mt-1">
-              {activeVehiclesCount} / {totalVehiclesCount}
-            </h3>
+        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Active Vehicles</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold font-mono text-slate-100">53</span>
           </div>
         </div>
 
-        {/* Drivers On Duty */}
-        <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex items-center gap-4 relative overflow-hidden">
-          <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-            <Users className="h-6 w-6" />
+        {/* Available Vehicles */}
+        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Available Vehicles</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold font-mono text-slate-100">42</span>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Drivers On Duty
-            </p>
-            <h3 className="text-2xl font-bold font-mono text-slate-100 mt-1">
-              {activeDriversCount} / {totalDriversCount}
-            </h3>
+        </div>
+
+        {/* Vehicles in Maintenance */}
+        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">In Maintenance</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold font-mono text-slate-100">05</span>
           </div>
         </div>
 
         {/* Active Trips */}
-        <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex items-center gap-4 relative overflow-hidden">
-          <div className="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-            <Compass className="h-6 w-6" />
+        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Active Trips</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold font-mono text-slate-100">18</span>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Active / Dispatch Trips
-            </p>
-            <h3 className="text-2xl font-bold font-mono text-slate-100 mt-1">
-              {activeTripsCount}
-            </h3>
+        </div>
+
+        {/* Pending Trips */}
+        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Pending Trips</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold font-mono text-slate-100">09</span>
+          </div>
+        </div>
+
+        {/* Drivers On Duty */}
+        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Drivers On Duty</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold font-mono text-slate-100">26</span>
+          </div>
+        </div>
+
+        {/* Fleet Utilization */}
+        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px] bg-indigo-500/5 border-indigo-500/10">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400">Fleet Utilization</span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="text-2xl font-bold font-mono text-indigo-300">81%</span>
           </div>
         </div>
       </div>
 
-      {/* Charts Section */}
+      {/* Main Layout sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Utilization Line Chart */}
-        <div className="lg:col-span-2 glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-lg font-bold text-slate-200">Utilization Rate</h3>
-              <p className="text-xs text-slate-500 mt-0.5">Average weekly vehicle scheduling efficiency</p>
-            </div>
-            <div className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-lg">
-              <TrendingUp className="h-3.5 w-3.5" />
-              <span>+4.2% this week</span>
-            </div>
+        {/* Recent Trips Table */}
+        <div className="lg:col-span-2 glass-panel border border-slate-800 p-6 rounded-2xl">
+          <div className="mb-4">
+            <h3 className="text-lg font-bold text-slate-200">Recent Trips</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Trips dispatched or completed in this cycle</p>
           </div>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={utilizationTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorRate" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="day" stroke="#475569" fontSize={11} tickLine={false} />
-                <YAxis stroke="#475569" fontSize={11} tickLine={false} domain={[0, 100]} />
-                <Tooltip
-                  contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }}
-                  labelStyle={{ color: "#94a3b8" }}
-                />
-                <Area type="monotone" dataKey="rate" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorRate)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 bg-slate-900/30">
+                  <th className="p-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Trip</th>
+                  <th className="p-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Vehicle</th>
+                  <th className="p-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Driver</th>
+                  <th className="p-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">Status</th>
+                  <th className="p-3.5 text-xs font-semibold uppercase tracking-wider text-slate-400">ETA</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-850">
+                {recentTrips.map((t) => (
+                  <tr key={t.id} className="hover:bg-slate-900/30 transition-colors">
+                    <td className="p-3.5 font-mono text-xs font-bold text-indigo-400">{t.id}</td>
+                    <td className="p-3.5 text-slate-300 text-sm font-semibold">{t.vehicle}</td>
+                    <td className="p-3.5 text-slate-300 text-sm">{t.driver}</td>
+                    <td className="p-3.5">
+                      <span className={`inline-block text-xs font-semibold px-2.5 py-0.5 rounded-full border ${getStatusStyle(t.status)}`}>
+                        {t.status}
+                      </span>
+                    </td>
+                    <td className="p-3.5 text-slate-400 text-xs font-mono">{t.eta}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Vehicle Status Breakdown */}
-        <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col">
-          <div>
-            <h3 className="text-lg font-bold text-slate-200">Vehicle Inventory</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Real-time breakdown of current statuses</p>
+        {/* Vehicle Inventory breakdown (Recharts) */}
+        {canSeeAnalytics ? (
+          <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col">
+            <div>
+              <h3 className="text-lg font-bold text-slate-200">Vehicle Status</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Real-time inventory overview</p>
+            </div>
+            <div className="h-64 w-full mt-6">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={statusBreakdown} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="name" stroke="#475569" fontSize={10} tickLine={false} />
+                  <YAxis stroke="#475569" fontSize={10} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }}
+                    itemStyle={{ fontSize: "12px" }}
+                  />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                    {statusBreakdown.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-          <div className="h-80 w-full mt-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={statusBreakdown} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#475569" fontSize={10} tickLine={false} />
-                <YAxis stroke="#475569" fontSize={10} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }}
-                  itemStyle={{ fontSize: "12px" }}
-                />
-                <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                  {statusBreakdown.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+        ) : (
+          <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-center items-center text-center">
+            <span className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Analytics Restricted</span>
+            <p className="text-[11px] text-slate-600 mt-2">Only Fleet Managers or Financial Analysts are authorized to view inventory charts.</p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

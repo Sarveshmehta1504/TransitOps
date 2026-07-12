@@ -1,86 +1,156 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { RoleGate } from "@/components/layout/RoleGate";
-import { MOCK_USERS } from "@/lib/api/auth";
-import { ShieldCheck, UserPlus, Settings, Key, HelpCircle } from "lucide-react";
+import { useToast } from "@/providers/toast-provider";
+import { ShieldCheck, Info } from "lucide-react";
 
 export default function SettingsUsersPage() {
+  const { toast } = useToast();
+  const [depotName, setDepotName] = useState("Gandhinagar Depot GJ4");
+
+  const handleSaveChanges = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast("Depot configuration saved successfully", "success");
+  };
+
+  // Enforced RBAC matrix rules
+  const rbacMatrix = [
+    { role: "Fleet Manager", fleet: "Full", drivers: "Full", trips: "No Access", fuel: "No Access", analytics: "Full" },
+    { role: "Dispatcher", fleet: "View-Only", drivers: "No Access", trips: "Full", fuel: "No Access", analytics: "No Access" },
+    { role: "Safety Officer", fleet: "No Access", drivers: "Full", trips: "View-Only", fuel: "No Access", analytics: "No Access" },
+    { role: "Financial Analyst", fleet: "View-Only", drivers: "No Access", trips: "No Access", fuel: "Full", analytics: "Full" },
+  ];
+
+  const getPermissionBadgeStyle = (perm: string) => {
+    switch (perm) {
+      case "Full":
+        return "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+      case "View-Only":
+        return "text-blue-400 bg-blue-500/10 border-blue-500/20";
+      case "No Access":
+      default:
+        return "text-slate-500 bg-slate-950 border-slate-900";
+    }
+  };
+
   return (
     <RoleGate allowedRoles={["Fleet Manager"]}>
       <div className="space-y-8 select-none">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-              Users & Settings
-            </h1>
-            <p className="text-slate-400 text-sm mt-1">
-              Configure system roles, operator permissions, security controls.
-            </p>
-          </div>
-          <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-indigo-600/25 active:scale-[0.98]">
-            <UserPlus className="h-4 w-4" />
-            <span>Invite User</span>
-          </button>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+            Settings
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">
+            Configure system parameters and view system access controls.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* User List Panel */}
-          <div className="lg:col-span-2 glass-panel border border-slate-800 p-6 rounded-2xl">
+          {/* General Section */}
+          <div className="lg:col-span-1 glass-panel border border-slate-800 p-6 rounded-2xl">
             <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-850 pb-2">
-              System Operators
+              General Parameters
             </h3>
-            <div className="divide-y divide-slate-850">
-              {MOCK_USERS.map((user) => (
-                <div key={user.id} className="py-4 flex items-center justify-between first:pt-0 last:pb-0">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center font-bold text-slate-400">
-                      {user.name.charAt(0)}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-slate-200">{user.name}</h4>
-                      <p className="text-xs text-slate-500 mt-0.5">{user.email}</p>
-                    </div>
-                  </div>
-                  <span className="flex items-center gap-1.5 bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 px-3 py-1 rounded-xl text-xs font-semibold">
-                    <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
-                    {user.role}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <form onSubmit={handleSaveChanges} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Depot Name</label>
+                <input
+                  type="text"
+                  value={depotName}
+                  onChange={(e) => setDepotName(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 text-slate-200 text-sm px-4 py-2.5 rounded-xl focus:outline-none focus:border-indigo-500"
+                  placeholder="e.g. Gandhinagar Depot"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Currency</label>
+                <input
+                  type="text"
+                  value="INR (Rs)"
+                  disabled
+                  className="w-full bg-slate-950/50 border border-slate-900 text-slate-500 text-sm px-4 py-2.5 rounded-xl cursor-not-allowed font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Distance Unit</label>
+                <input
+                  type="text"
+                  value="Kilometers"
+                  disabled
+                  className="w-full bg-slate-950/50 border border-slate-900 text-slate-500 text-sm px-4 py-2.5 rounded-xl cursor-not-allowed"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-indigo-600/25 active:scale-[0.98] mt-6"
+              >
+                Save changes
+              </button>
+            </form>
           </div>
 
-          {/* System Configs panel */}
-          <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col gap-6">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-850 pb-2">
-                Configurations
-              </h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-slate-950/50 border border-slate-850 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Key className="h-4.5 w-4.5 text-slate-400" />
-                    <span className="text-xs font-semibold text-slate-300">API Key Rotation</span>
-                  </div>
-                  <span className="text-[10px] bg-slate-900 text-slate-500 border border-slate-850 font-bold px-2 py-0.5 rounded uppercase">Disabled</span>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-slate-950/50 border border-slate-850 rounded-xl">
-                  <div className="flex items-center gap-3">
-                    <Settings className="h-4.5 w-4.5 text-slate-400" />
-                    <span className="text-xs font-semibold text-slate-300">Telemetry Stream</span>
-                  </div>
-                  <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 font-bold px-2 py-0.5 rounded uppercase">Active</span>
-                </div>
-              </div>
+          {/* RBAC Reference Section */}
+          <div className="lg:col-span-2 glass-panel border border-slate-800 p-6 rounded-2xl">
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-850 pb-2">
+              Role-Based Access (RBAC) Enforcements
+            </h3>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-850 text-slate-550">
+                    <th className="py-2.5 font-semibold uppercase">Role</th>
+                    <th className="py-2.5 font-semibold uppercase">Fleet</th>
+                    <th className="py-2.5 font-semibold uppercase">Drivers</th>
+                    <th className="py-2.5 font-semibold uppercase">Trips</th>
+                    <th className="py-2.5 font-semibold uppercase">Fuel/Exp.</th>
+                    <th className="py-2.5 font-semibold uppercase">Analytics</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-850/60">
+                  {rbacMatrix.map((row) => (
+                    <tr key={row.role} className="hover:bg-slate-900/10">
+                      <td className="py-3 font-semibold text-slate-200">{row.role}</td>
+                      <td className="py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded border ${getPermissionBadgeStyle(row.fleet)}`}>
+                          {row.fleet}
+                        </span>
+                      </td>
+                      <td className="py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded border ${getPermissionBadgeStyle(row.drivers)}`}>
+                          {row.drivers}
+                        </span>
+                      </td>
+                      <td className="py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded border ${getPermissionBadgeStyle(row.trips)}`}>
+                          {row.trips}
+                        </span>
+                      </td>
+                      <td className="py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded border ${getPermissionBadgeStyle(row.fuel)}`}>
+                          {row.fuel}
+                        </span>
+                      </td>
+                      <td className="py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded border ${getPermissionBadgeStyle(row.analytics)}`}>
+                          {row.analytics}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            <div className="p-4 bg-indigo-500/5 border border-indigo-500/10 text-indigo-300 rounded-2xl text-xs leading-relaxed flex items-start gap-3">
-              <HelpCircle className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
-              <p>
-                Only authorized accounts assigned to the <span className="font-semibold text-indigo-200">Fleet Manager</span> system role are permitted to modify security access policies.
+            <div className="mt-6 p-4 bg-slate-950 border border-slate-850 rounded-2xl flex gap-3 text-slate-500">
+              <Info className="h-5 w-5 text-indigo-400 shrink-0" />
+              <p className="text-[11px] leading-normal">
+                This matrix is read-only reference documentation of the active RBAC policies enforced client-side and verified by the server.
               </p>
             </div>
           </div>

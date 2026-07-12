@@ -3,8 +3,9 @@
 import React from "react";
 import { useReports } from "@/hooks/useReports";
 import { formatCurrency, formatNumber } from "@/lib/utils";
-import { Download, BarChart3, TrendingUp, AlertCircle, FileSpreadsheet } from "lucide-react";
+import { Download, TrendingUp, BarChart3, AlertCircle, Percent, Compass, DollarSign } from "lucide-react";
 import { useToast } from "@/providers/toast-provider";
+import { RoleGate } from "@/components/layout/RoleGate";
 import {
   ResponsiveContainer,
   BarChart,
@@ -13,6 +14,8 @@ import {
   YAxis,
   Tooltip,
   Cell,
+  LineChart,
+  Line,
 } from "recharts";
 
 export default function ReportsPage() {
@@ -27,11 +30,11 @@ export default function ReportsPage() {
       "Vehicle Registration",
       "Model",
       "Trips Completed",
-      "Total Distance (mi)",
-      "Total Fuel Cost ($)",
-      "Fuel Efficiency (mi/L)",
-      "Maintenance Cost ($)",
-      "Total Operational Cost ($)",
+      "Total Distance (km)",
+      "Total Fuel Cost (Rs)",
+      "Fuel Efficiency (km/l)",
+      "Maintenance Cost (Rs)",
+      "Total Operational Cost (Rs)",
       "ROI (%)",
     ];
 
@@ -81,30 +84,36 @@ export default function ReportsPage() {
     );
   }
 
-  // Find best performing vehicle by ROI
-  const bestPerforming = [...reports].sort((a, b) => b.roi - a.roi)[0];
+  // Monthly Revenue Mock Data
+  const monthlyRevenue = [
+    { month: "Jan", revenue: 450000 },
+    { month: "Feb", revenue: 520000 },
+    { month: "Mar", revenue: 490000 },
+    { month: "Apr", revenue: 610000 },
+    { month: "May", revenue: 580000 },
+    { month: "Jun", revenue: 640000 },
+  ];
 
-  // Recharts Chart Data (Bar graph of ROI per vehicle)
-  const chartData = reports.map(r => ({
-    name: r.registrationNumber,
-    roi: Math.max(0, Math.round(r.roi)),
-  }));
+  // Costliest Vehicles Ranked
+  const costliestVehicles = [
+    { name: "TRUCK-11", cost: 26400 },
+    { name: "MINI-03", cost: 12200 },
+    { name: "VAN-05", cost: 5650 },
+  ];
 
   return (
-    <div className="space-y-8 select-none">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
-            Financial Analytics & ROI
-          </h1>
-          <p className="text-slate-400 text-sm mt-1">
-            Audit fleet investments, vehicle ROI yields, and operating expenditures.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* CSV Export */}
+    <RoleGate allowedRoles={["Fleet Manager", "Financial Analyst"]}>
+      <div className="space-y-8 select-none">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+              Analytics
+            </h1>
+            <p className="text-slate-400 text-sm mt-1">
+              Audit fleet investments, vehicle ROI yields, and operating expenditures.
+            </p>
+          </div>
           <button
             onClick={handleExportCSV}
             className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-indigo-600/25 active:scale-[0.98]"
@@ -113,82 +122,92 @@ export default function ReportsPage() {
             <span>Export CSV</span>
           </button>
         </div>
-      </div>
 
-      {/* Highlights summary */}
-      {bestPerforming && (
-        <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-              <TrendingUp className="h-6 w-6" />
+        {/* KPI Cards Grid exactly as requested */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Fuel Efficiency */}
+          <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Fuel Efficiency</span>
+            <div className="flex items-baseline gap-2 mt-2">
+              <span className="text-2xl font-bold font-mono text-slate-100">8.4 km/l</span>
             </div>
+          </div>
+
+          {/* Fleet Utilization */}
+          <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Fleet Utilization</span>
+            <div className="flex items-baseline gap-2 mt-2">
+              <span className="text-2xl font-bold font-mono text-slate-100">81%</span>
+            </div>
+          </div>
+
+          {/* Operational Cost */}
+          <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-between">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Operational Cost</span>
+            <div className="flex items-baseline gap-2 mt-2">
+              <span className="text-2xl font-bold font-mono text-slate-100">{formatCurrency(34070)}</span>
+            </div>
+          </div>
+
+          {/* Vehicle ROI */}
+          <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-between bg-indigo-500/5 border-indigo-500/10">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400">Vehicle ROI</span>
+            <div className="flex flex-col gap-1.5 mt-2">
+              <span className="text-2xl font-bold font-mono text-indigo-300">14.2%</span>
+              <span className="text-[9px] text-slate-500 font-medium leading-normal">
+                ROI = (Revenue - (Maintenance + Fuel)) / Acquisition Cost
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Monthly Revenue Area Chart */}
+          <div className="lg:col-span-2 glass-panel border border-slate-800 p-6 rounded-2xl">
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-slate-200">Monthly Revenue</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Summary of operations revenue yields</p>
+            </div>
+            <div className="h-72 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyRevenue} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <XAxis dataKey="month" stroke="#475569" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#475569" fontSize={11} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }}
+                    formatter={(val) => [formatCurrency(Number(val)), "Revenue"]}
+                  />
+                  <Line type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2.5} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Top Costliest Vehicles Ranked List */}
+          <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-between">
             <div>
-              <h4 className="text-sm font-semibold text-slate-200">Top Performing Asset</h4>
-              <p className="text-xs text-slate-500 mt-0.5">Based on calculated Return on Investment (ROI)</p>
+              <h3 className="text-lg font-bold text-slate-200">Top Costliest Vehicles</h3>
+              <p className="text-xs text-slate-500 mt-0.5">Ranked by overall operational and upkeep logs</p>
             </div>
-          </div>
-          <div className="text-right">
-            <span className="font-mono text-xs font-bold bg-slate-900 text-indigo-400 px-2.5 py-1.5 rounded-lg border border-slate-800 shadow-inner">
-              {bestPerforming.registrationNumber}
-            </span>
-            <span className="text-emerald-400 font-bold font-mono text-lg ml-3">
-              +{bestPerforming.roi.toFixed(1)}% ROI
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Main layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* ROI Distribution Chart */}
-        <div className="lg:col-span-2 glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col">
-          <div className="mb-6">
-            <h3 className="text-lg font-bold text-slate-200">Asset Yield (ROI %)</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Calculated ROI percentage across active fleet assets</p>
-          </div>
-          <div className="h-80 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#475569" fontSize={11} tickLine={false} />
-                <YAxis stroke="#475569" fontSize={11} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px" }}
-                  formatter={(val) => [`${val}%`, "ROI"]}
-                />
-                <Bar dataKey="roi" fill="#6366f1" radius={[6, 6, 0, 0]}>
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.roi > 50 ? "#10b981" : "#6366f1"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Detailed Grid Table */}
-        <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-between">
-          <div>
-            <h3 className="text-lg font-bold text-slate-200">Operational Margins</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Asset ROI breakdowns</p>
-          </div>
-          <div className="space-y-4 my-6 flex-grow overflow-y-auto max-h-[300px]">
-            {reports.map((report) => (
-              <div key={report.vehicleId} className="flex items-center justify-between border-b border-slate-850 pb-3 last:border-0 last:pb-0">
-                <div>
-                  <h4 className="text-sm font-semibold text-slate-300">{report.vehicleName}</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Ops Cost: <span className="font-mono text-slate-400">{formatCurrency(report.operationalCost)}</span></p>
-                </div>
-                <div className="text-right">
-                  <div className={`text-sm font-bold font-mono ${report.roi >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                    {report.roi.toFixed(1)}%
+            <div className="space-y-4 my-6 flex-grow">
+              {costliestVehicles.map((vehicle, index) => (
+                <div key={vehicle.name} className="flex items-center justify-between border-b border-slate-850 pb-3 last:border-0 last:pb-0">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-mono font-bold text-slate-500">#{index + 1}</span>
+                    <span className="font-semibold text-slate-300 text-sm">{vehicle.name}</span>
                   </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5 font-mono">{report.fuelEfficiency.toFixed(2)} mi/L</div>
+                  <div className="text-right">
+                    <span className="text-sm font-bold font-mono text-rose-400">
+                      {formatCurrency(vehicle.cost)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </RoleGate>
   );
 }
