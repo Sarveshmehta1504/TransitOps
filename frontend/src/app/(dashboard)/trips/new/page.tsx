@@ -62,6 +62,7 @@ export default function NewTripPage() {
       status: "dispatched" as const,
       final_odometer: null,
       fuel_consumed: null,
+      starting_odometer: selectedVehicle ? selectedVehicle.odometer : 0,
     };
 
     const result = tripSchema.safeParse(formData);

@@ -96,6 +96,33 @@ export const mockDB = {
   setExpenses: (data: Expense[]) => setMockDB<Expense>("expenses", data),
 };
 
+// Routes that should NEVER fall back to mock (auth routes)
+const AUTH_ROUTES = ["/login", "/logout", "/me", "/user"];
+
+/**
+ * Unwrap Laravel API responses:
+ * - { data: [...], links, meta }  → return data array
+ * - { success, data: {...} }      → return data object
+ * - plain array or object         → return as-is
+ */
+function unwrapResponse<T>(raw: any): T {
+  if (raw === null || raw === undefined) return raw as T;
+  if (Array.isArray(raw)) return raw as T;
+  if (typeof raw === "object") {
+    // Laravel paginated: { data: [...], links, meta }
+    if (Array.isArray(raw.data)) return raw.data as T;
+    // Laravel single resource: { data: {...} } — but NOT auth wrappers
+    if (raw.data !== undefined && (raw.links !== undefined || raw.meta !== undefined)) {
+      return raw.data as T;
+    }
+    // { success, data: {} } wrapper (e.g. /dashboard)
+    if (raw.success !== undefined && raw.data !== undefined) {
+      return raw.data as T;
+    }
+  }
+  return raw as T;
+}
+
 export async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
   const token = !isServer ? localStorage.getItem("transitops_auth_token") : null;
@@ -105,6 +132,9 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
     headers.set("Authorization", `Bearer ${token}`);
   }
   headers.set("Content-Type", "application/json");
+  headers.set("Accept", "application/json");
+
+  const isAuthRoute = AUTH_ROUTES.some(r => path === r || path.startsWith(r));
 
   try {
     const res = await fetch(url, { ...options, headers });
@@ -112,16 +142,20 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
       const errBody = await res.json().catch(() => ({}));
       throw { status: res.status, message: errBody.message || `HTTP error: ${res.status}` };
     }
-    return res.json() as Promise<T>;
+    const raw = await res.json();
+    return unwrapResponse<T>(raw);
   } catch (error: any) {
-    // If backend 404/500/failed to fetch, we fallback to mockDB
-    if (error.status === 404 || error.message?.includes("Failed to fetch") || !options) {
-      console.warn(`API path ${path} returned error or missing. Falling back to local Storage Mock DB.`);
+    // Never mock auth routes — let errors propagate so callers can handle them
+    if (isAuthRoute) throw error;
+    // For data routes: fall back to mock on 404/500/403/network failure
+    if (error.status === 404 || error.status === 500 || error.status === 403 || error.message?.includes("Failed to fetch") || !options) {
+      console.warn(`API path ${path} not available (${error.status || error.message}). Falling back to local mock DB.`);
       return handleMockRequest<T>(path, options);
     }
     throw error;
   }
 }
+
 
 function handleMockRequest<T>(path: string, options?: RequestInit): T {
   const method = options?.method || "GET";

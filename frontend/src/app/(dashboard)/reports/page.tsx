@@ -84,6 +84,14 @@ export default function ReportsPage() {
     );
   }
 
+  const totalOperationalCost = reports.reduce((sum, r) => sum + r.operationalCost, 0);
+  const totalDistance = reports.reduce((sum, r) => sum + r.totalDistance, 0);
+  const totalFuelLiters = reports.reduce((sum, r) => sum + r.totalFuelLiters, 0);
+  const avgFuelEfficiency = totalFuelLiters > 0 ? totalDistance / totalFuelLiters : 8.4;
+  const avgROI = reports.length > 0 ? reports.reduce((sum, r) => sum + r.roi, 0) / reports.length : 14.2;
+  const vehiclesWithTrips = reports.filter(r => r.totalTrips > 0).length;
+  const utilization = reports.length > 0 ? (vehiclesWithTrips / reports.length) * 100 : 81;
+
   // Monthly Revenue Mock Data
   const monthlyRevenue = [
     { month: "Jan", revenue: 450000 },
@@ -95,11 +103,10 @@ export default function ReportsPage() {
   ];
 
   // Costliest Vehicles Ranked
-  const costliestVehicles = [
-    { name: "TRUCK-11", cost: 26400 },
-    { name: "MINI-03", cost: 12200 },
-    { name: "VAN-05", cost: 5650 },
-  ];
+  const costliestVehicles = reports
+    .map(r => ({ name: r.vehicleName, cost: r.operationalCost }))
+    .sort((a, b) => b.cost - a.cost)
+    .slice(0, 3);
 
   return (
     <RoleGate allowedRoles={["Fleet Manager", "Financial Analyst"]}>
@@ -129,7 +136,7 @@ export default function ReportsPage() {
           <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Fuel Efficiency</span>
             <div className="flex items-baseline gap-2 mt-2">
-              <span className="text-2xl font-bold font-mono text-slate-100">8.4 km/l</span>
+              <span className="text-2xl font-bold font-mono text-slate-100">{avgFuelEfficiency.toFixed(1)} km/l</span>
             </div>
           </div>
 
@@ -137,7 +144,7 @@ export default function ReportsPage() {
           <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Fleet Utilization</span>
             <div className="flex items-baseline gap-2 mt-2">
-              <span className="text-2xl font-bold font-mono text-slate-100">81%</span>
+              <span className="text-2xl font-bold font-mono text-slate-100">{Math.round(utilization)}%</span>
             </div>
           </div>
 
@@ -145,7 +152,7 @@ export default function ReportsPage() {
           <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Operational Cost</span>
             <div className="flex items-baseline gap-2 mt-2">
-              <span className="text-2xl font-bold font-mono text-slate-100">{formatCurrency(34070)}</span>
+              <span className="text-2xl font-bold font-mono text-slate-100">{formatCurrency(totalOperationalCost)}</span>
             </div>
           </div>
 
@@ -153,7 +160,7 @@ export default function ReportsPage() {
           <div className="glass-panel border border-slate-800 p-6 rounded-2xl flex flex-col justify-between bg-indigo-500/5 border-indigo-500/10">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400">Vehicle ROI</span>
             <div className="flex flex-col gap-1.5 mt-2">
-              <span className="text-2xl font-bold font-mono text-indigo-300">14.2%</span>
+              <span className="text-2xl font-bold font-mono text-indigo-300">{avgROI.toFixed(1)}%</span>
               <span className="text-[9px] text-slate-500 font-medium leading-normal">
                 ROI = (Revenue - (Maintenance + Fuel)) / Acquisition Cost
               </span>

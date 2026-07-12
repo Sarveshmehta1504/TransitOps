@@ -24,7 +24,7 @@ import { UserRole } from "@/types/user";
 const ROLE_CONFIG = [
   {
     role: "Fleet Manager" as UserRole,
-    email: "manager@transitops.in",
+    email: "fleet@transitops.com",
     icon: Truck,
     access: "Fleet, Drivers, Maintenance, Analytics",
     color: "from-blue-600/20 to-blue-600/5 border-blue-500/30 hover:border-blue-500/60",
@@ -36,7 +36,7 @@ const ROLE_CONFIG = [
   },
   {
     role: "Dispatcher" as UserRole,
-    email: "Raven.k@transitops.in",
+    email: "dispatcher@transitops.com",
     icon: Compass,
     access: "Fleet (view), Trips",
     color: "from-indigo-600/20 to-indigo-600/5 border-indigo-500/30 hover:border-indigo-500/60",
@@ -48,7 +48,7 @@ const ROLE_CONFIG = [
   },
   {
     role: "Safety Officer" as UserRole,
-    email: "safety@transitops.in",
+    email: "safety@transitops.com",
     icon: Users,
     access: "Drivers, Trips (view)",
     color: "from-amber-600/20 to-amber-600/5 border-amber-500/30 hover:border-amber-500/60",
@@ -60,7 +60,7 @@ const ROLE_CONFIG = [
   },
   {
     role: "Financial Analyst" as UserRole,
-    email: "analyst@transitops.in",
+    email: "finance@transitops.com",
     icon: BarChart3,
     access: "Fleet (view), Fuel & Expenses, Analytics",
     color: "from-emerald-600/20 to-emerald-600/5 border-emerald-500/30 hover:border-emerald-500/60",
@@ -77,18 +77,17 @@ export default function LoginPage() {
   const { toast } = useToast();
   const { isLight, toggleTheme } = useTheme();
 
-  const [email, setEmail] = useState("Raven.k@transitops.in");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole>("Dispatcher");
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [failedCount, setFailedCount] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
 
-  const handleSelectRole = (role: UserRole, mail: string) => {
+  const handleSelectRole = (role: UserRole) => {
     if (isLocked) return;
     setSelectedRole(role);
-    setEmail(mail);
     setErrors({});
   };
 
@@ -110,11 +109,11 @@ export default function LoginPage() {
       return;
     }
 
-    const matchesRole = ROLE_CONFIG.find(
-      (r) => r.role === selectedRole && r.email.toLowerCase() === email.toLowerCase()
-    );
-
-    if (!matchesRole || password !== "password123") {
+    try {
+      await login({ email, password, role: selectedRole });
+      toast(`Welcome back!`, "success");
+      window.location.href = "/";
+    } catch (err: any) {
       const nextFailCount = failedCount + 1;
       setFailedCount(nextFailCount);
       if (nextFailCount >= 5) {
@@ -122,18 +121,9 @@ export default function LoginPage() {
         setErrors({ general: "Account locked after 5 failed attempts. Contact your administrator." });
         toast("Account locked due to consecutive failures", "error");
       } else {
-        setErrors({ general: `Invalid credentials. ${5 - nextFailCount} attempt${5 - nextFailCount !== 1 ? "s" : ""} remaining.` });
+        setErrors({ general: err.message || `Invalid credentials. ${5 - nextFailCount} attempt${5 - nextFailCount !== 1 ? "s" : ""} remaining.` });
         toast("Authentication failed", "error");
       }
-      return;
-    }
-
-    try {
-      await login({ email, role: selectedRole });
-      toast(`Welcome back!`, "success");
-      window.location.href = "/";
-    } catch (err: any) {
-      toast(err.message || "Failed to authenticate", "error");
     }
   };
 
@@ -187,7 +177,7 @@ export default function LoginPage() {
                 <button
                   key={rc.role}
                   type="button"
-                  onClick={() => handleSelectRole(rc.role, rc.email)}
+                  onClick={() => handleSelectRole(rc.role)}
                   disabled={isLocked}
                   className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 group ${
                     isActive
@@ -390,7 +380,7 @@ export default function LoginPage() {
                 onChange={(e) => {
                   const role = e.target.value as UserRole;
                   const config = ROLE_CONFIG.find((r) => r.role === role);
-                  if (config) handleSelectRole(role, config.email);
+                  if (config) handleSelectRole(role);
                 }}
                 className={`w-full border text-sm px-4 py-3 rounded-xl focus:outline-none transition-colors appearance-none cursor-pointer ${
                   isLight ? "border-slate-200 hover:border-slate-300 focus:border-indigo-500 bg-white text-slate-900" : "border-slate-800 hover:border-slate-700 focus:border-indigo-500 bg-slate-900 text-slate-200"

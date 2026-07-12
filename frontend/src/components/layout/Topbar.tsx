@@ -81,7 +81,9 @@ export default function Topbar() {
   const initials = user
     ? user.name === "Raven K."
       ? "RK"
-      : user.name.split(" ").map((n) => n[0]).join("")
+      : user.name
+        ? user.name.split(" ").map((n) => n[0]).join("")
+        : "?"
     : "?";
 
   return (

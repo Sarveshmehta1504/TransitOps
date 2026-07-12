@@ -51,7 +51,9 @@ export default function Sidebar() {
   const initials = user
     ? user.name === "Raven K."
       ? "RK"
-      : user.name.split(" ").map((n: string) => n[0]).join("")
+      : user.name
+        ? user.name.split(" ").map((n: string) => n[0]).join("")
+        : "?"
     : "?";
 
   return (

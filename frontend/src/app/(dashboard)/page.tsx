@@ -2,14 +2,13 @@
 
 import React, { useState } from "react";
 import { useAuthContext } from "@/providers/auth-provider";
+import { useQuery } from "@tanstack/react-query";
+import { getDashboardStats } from "@/lib/api/reports";
 import {
   Truck,
   Users,
   Compass,
   Wrench,
-  Percent,
-  AlertTriangle,
-  Clock,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -28,6 +27,13 @@ export default function DashboardPage() {
   const [vehicleType, setVehicleType] = useState("All");
   const [status, setStatus] = useState("All");
   const [region, setRegion] = useState("All");
+
+  // Real backend dashboard stats
+  const { data: stats, isLoading: statsLoading } = useQuery({
+    queryKey: ["dashboard_stats"],
+    queryFn: getDashboardStats,
+    retry: 1,
+  });
 
   // Wireframe Sample Recent Trips
   const recentTrips = [
@@ -57,16 +63,47 @@ export default function DashboardPage() {
     }
   };
 
-  // Recharts Chart 2: Status Breakdown
-  const statusBreakdown = [
-    { name: "Available", value: 42, color: "#10b981" },
-    { name: "On Trip", value: 18, color: "#3b82f6" },
-    { name: "In Shop", value: 5, color: "#f59e0b" },
-    { name: "Retired", value: 8, color: "#64748b" },
-  ];
+  // KPI values — real data when available, fallback to static
+  const kpi = {
+    activeVehicles: stats ? (stats.vehicles.on_trip + stats.vehicles.in_shop) : 53,
+    availableVehicles: stats ? stats.vehicles.available : 42,
+    inMaintenance: stats ? stats.vehicles.in_shop : 5,
+    activeTrips: stats ? stats.trips.dispatched : 18,
+    pendingTrips: stats ? stats.trips.draft : 9,
+    driversOnDuty: stats ? stats.drivers.on_trip : 26,
+    fleetUtilization: stats
+      ? Math.round(((stats.vehicles.on_trip + stats.vehicles.in_shop) / Math.max(stats.vehicles.total, 1)) * 100)
+      : 81,
+  };
+
+  // Recharts Chart: Status Breakdown from real data
+  const statusBreakdown = stats
+    ? [
+        { name: "Available", value: stats.vehicles.available, color: "#10b981" },
+        { name: "On Trip", value: stats.vehicles.on_trip, color: "#3b82f6" },
+        { name: "In Shop", value: stats.vehicles.in_shop, color: "#f59e0b" },
+        { name: "Retired", value: stats.vehicles.retired, color: "#64748b" },
+      ]
+    : [
+        { name: "Available", value: 42, color: "#10b981" },
+        { name: "On Trip", value: 18, color: "#3b82f6" },
+        { name: "In Shop", value: 5, color: "#f59e0b" },
+        { name: "Retired", value: 8, color: "#64748b" },
+      ];
 
   // RBAC Widget checks
   const canSeeAnalytics = role === "Fleet Manager" || role === "Financial Analyst";
+
+  const Stat = ({ label, value, accent }: { label: string; value: string | number; accent?: boolean }) => (
+    <div className={`glass-panel border p-4 rounded-2xl flex flex-col justify-between min-h-[100px] ${accent ? "bg-indigo-500/5 border-indigo-500/10" : "border-slate-800"}`}>
+      <span className={`text-[10px] font-semibold uppercase tracking-wider ${accent ? "text-indigo-400" : "text-slate-500"}`}>{label}</span>
+      <div className="flex items-baseline gap-2 mt-2">
+        <span className={`text-2xl font-bold font-mono ${accent ? "text-indigo-300" : "text-slate-100"}`}>
+          {statsLoading ? "—" : value}
+        </span>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-8 select-none">
@@ -124,61 +161,13 @@ export default function DashboardPage() {
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-        {/* Active Vehicles */}
-        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Active Vehicles</span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl font-bold font-mono text-slate-100">53</span>
-          </div>
-        </div>
-
-        {/* Available Vehicles */}
-        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Available Vehicles</span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl font-bold font-mono text-slate-100">42</span>
-          </div>
-        </div>
-
-        {/* Vehicles in Maintenance */}
-        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">In Maintenance</span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl font-bold font-mono text-slate-100">05</span>
-          </div>
-        </div>
-
-        {/* Active Trips */}
-        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Active Trips</span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl font-bold font-mono text-slate-100">18</span>
-          </div>
-        </div>
-
-        {/* Pending Trips */}
-        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Pending Trips</span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl font-bold font-mono text-slate-100">09</span>
-          </div>
-        </div>
-
-        {/* Drivers On Duty */}
-        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px]">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Drivers On Duty</span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl font-bold font-mono text-slate-100">26</span>
-          </div>
-        </div>
-
-        {/* Fleet Utilization */}
-        <div className="glass-panel border border-slate-800 p-4 rounded-2xl flex flex-col justify-between min-h-[100px] bg-indigo-500/5 border-indigo-500/10">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-indigo-400">Fleet Utilization</span>
-          <div className="flex items-baseline gap-2 mt-2">
-            <span className="text-2xl font-bold font-mono text-indigo-300">81%</span>
-          </div>
-        </div>
+        <Stat label="Active Vehicles" value={kpi.activeVehicles} />
+        <Stat label="Available Vehicles" value={kpi.availableVehicles} />
+        <Stat label="In Maintenance" value={String(kpi.inMaintenance).padStart(2, "0")} />
+        <Stat label="Active Trips" value={kpi.activeTrips} />
+        <Stat label="Pending Trips" value={String(kpi.pendingTrips).padStart(2, "0")} />
+        <Stat label="Drivers On Duty" value={kpi.driversOnDuty} />
+        <Stat label="Fleet Utilization" value={`${kpi.fleetUtilization}%`} accent />
       </div>
 
       {/* Main Layout sections */}
