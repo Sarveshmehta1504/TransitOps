@@ -96,6 +96,9 @@ export const mockDB = {
   setExpenses: (data: Expense[]) => setMockDB<Expense>("expenses", data),
 };
 
+// Routes that should NEVER fall back to mock (auth routes)
+const AUTH_ROUTES = ["/login", "/logout", "/me", "/user"];
+
 export async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const url = `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
   const token = !isServer ? localStorage.getItem("transitops_auth_token") : null;
@@ -105,6 +108,9 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
     headers.set("Authorization", `Bearer ${token}`);
   }
   headers.set("Content-Type", "application/json");
+  headers.set("Accept", "application/json");
+
+  const isAuthRoute = AUTH_ROUTES.some(r => path === r || path.startsWith(r));
 
   try {
     const res = await fetch(url, { ...options, headers });
@@ -114,14 +120,17 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
     }
     return res.json() as Promise<T>;
   } catch (error: any) {
-    // If backend 404/500/failed to fetch, we fallback to mockDB
+    // Never mock auth routes — let errors propagate so callers can handle them
+    if (isAuthRoute) throw error;
+    // For data routes: fall back to mock on 404/500/network failure
     if (error.status === 404 || error.status === 500 || error.message?.includes("Failed to fetch") || !options) {
-      console.warn(`API path ${path} returned error or missing (${error.status || error.message}). Falling back to local Storage Mock DB.`);
+      console.warn(`API path ${path} not available (${error.status || error.message}). Falling back to local mock DB.`);
       return handleMockRequest<T>(path, options);
     }
     throw error;
   }
 }
+
 
 function handleMockRequest<T>(path: string, options?: RequestInit): T {
   const method = options?.method || "GET";
