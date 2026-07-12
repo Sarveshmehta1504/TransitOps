@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuthContext } from "@/providers/auth-provider";
+import { useTheme } from "@/providers/theme-provider";
 import { cn } from "@/lib/utils";
 import {
   Truck,
@@ -15,6 +16,8 @@ import {
   LayoutDashboard,
   LogOut,
   ShieldCheck,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { logout } from "@/lib/api/auth";
 import { useToast } from "@/providers/toast-provider";
@@ -23,6 +26,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { role, user, setUser } = useAuthContext();
   const { toast } = useToast();
+  const { isLight, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     await logout();
@@ -42,14 +46,32 @@ export default function Sidebar() {
     { label: "Settings", href: "/settings/users", icon: Settings, allowed: ["Fleet Manager"] },
   ];
 
+  const initials = user
+    ? user.name === "Raven K."
+      ? "RK"
+      : user.name.split(" ").map((n: string) => n[0]).join("")
+    : "?";
+
   return (
-    <aside className="w-64 bg-slate-950 border-r border-slate-900 flex flex-col shrink-0">
+    <aside
+      className="w-64 flex flex-col shrink-0 transition-colors duration-300"
+      style={{
+        background: "var(--sidebar-bg)",
+        borderRight: "1px solid var(--sidebar-border)",
+      }}
+    >
       {/* Header */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-900 gap-3">
+      <div
+        className="h-16 flex items-center px-6 gap-3"
+        style={{ borderBottom: "1px solid var(--sidebar-border)" }}
+      >
         <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-blue-500/20 shrink-0">
           T
         </div>
-        <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+        <span
+          className="text-xl font-bold tracking-tight"
+          style={{ color: "var(--text-primary)" }}
+        >
           TransitOps
         </span>
       </div>
@@ -60,7 +82,9 @@ export default function Sidebar() {
           const isAllowed = role && item.allowed.includes(role);
           if (!isAllowed) return null;
 
-          const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+          const isActive =
+            pathname === item.href ||
+            (item.href !== "/" && pathname.startsWith(item.href));
 
           return (
             <Link
@@ -70,14 +94,33 @@ export default function Sidebar() {
                 "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 select-none group",
                 isActive
                   ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/10"
-                  : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
+                  : "hover:text-slate-200"
               )}
+              style={
+                !isActive
+                  ? {
+                      color: "var(--text-secondary)",
+                    }
+                  : undefined
+              }
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.background =
+                    "var(--sidebar-item-hover)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  (e.currentTarget as HTMLElement).style.background = "";
+                }
+              }}
             >
               <item.icon
                 className={cn(
                   "h-5 w-5 shrink-0 transition-transform group-hover:scale-105",
-                  isActive ? "text-white" : "text-slate-400 group-hover:text-slate-200"
+                  isActive ? "text-white" : ""
                 )}
+                style={!isActive ? { color: "var(--text-muted)" } : undefined}
               />
               <span>{item.label}</span>
             </Link>
@@ -85,28 +128,114 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* User profile */}
-      <div className="p-4 border-t border-slate-900 flex flex-col gap-3">
+      {/* User profile + theme + logout */}
+      <div
+        className="p-4 flex flex-col gap-3"
+        style={{ borderTop: "1px solid var(--sidebar-border)" }}
+      >
+        {/* User card */}
         {user && (
           <div className="flex items-center gap-3 px-2">
             <div className="h-9 w-9 rounded-xl bg-indigo-600/15 border border-indigo-500/20 flex items-center justify-center font-bold text-indigo-400 text-xs shrink-0 select-none">
-              {user.name === "Raven K."
-                ? "RK"
-                : user.name.split(" ").map((n: string) => n[0]).join("")}
+              {initials}
             </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-semibold text-slate-200 truncate">{user.name}</p>
-              <p className="text-xs text-slate-500 truncate flex items-center gap-1">
+              <p
+                className="text-sm font-semibold truncate"
+                style={{ color: "var(--text-primary)" }}
+              >
+                {user.name}
+              </p>
+              <p
+                className="text-xs truncate flex items-center gap-1"
+                style={{ color: "var(--text-muted)" }}
+              >
                 <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
                 {user.role}
               </p>
             </div>
           </div>
         )}
-        
+
+        {/* ── Theme Toggle ── */}
+        <div
+          className="flex items-center justify-between px-2 py-2 rounded-xl transition-all duration-200"
+          style={{
+            background: isLight ? "rgba(99,102,241,0.06)" : "rgba(255,255,255,0.03)",
+            border: isLight
+              ? "1px solid rgba(99,102,241,0.15)"
+              : "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          {/* Label + icon */}
+          <div className="flex items-center gap-2">
+            <div
+              className="transition-all duration-300"
+              style={{
+                color: isLight ? "#f59e0b" : "#818cf8",
+                transform: isLight ? "rotate(0deg) scale(1)" : "rotate(-20deg) scale(0.9)",
+                filter: isLight ? "drop-shadow(0 0 6px rgba(245,158,11,0.5))" : "drop-shadow(0 0 6px rgba(129,140,248,0.4))",
+              }}
+            >
+              {isLight ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </div>
+            <span
+              className="text-xs font-semibold select-none transition-colors duration-300"
+              style={{ color: isLight ? "#7c3aed" : "#818cf8" }}
+            >
+              {isLight ? "Light Mode" : "Dark Mode"}
+            </span>
+          </div>
+
+          {/* Toggle switch */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
+            className="relative shrink-0 focus:outline-none"
+            style={{ width: 40, height: 22 }}
+          >
+            {/* Track */}
+            <span
+              className="absolute inset-0 rounded-full transition-all duration-300"
+              style={{
+                background: isLight
+                  ? "linear-gradient(135deg, #6366f1, #8b5cf6)"
+                  : "rgba(99,102,241,0.2)",
+                border: isLight
+                  ? "1px solid rgba(99,102,241,0.5)"
+                  : "1px solid rgba(99,102,241,0.3)",
+                boxShadow: isLight
+                  ? "0 0 10px rgba(99,102,241,0.3)"
+                  : "none",
+              }}
+            />
+            {/* Knob */}
+            <span
+              className="absolute top-[3px] rounded-full transition-all duration-300 flex items-center justify-center"
+              style={{
+                width: 16,
+                height: 16,
+                left: isLight ? "calc(100% - 19px)" : "3px",
+                background: isLight ? "#ffffff" : "#818cf8",
+                boxShadow: isLight
+                  ? "0 1px 4px rgba(0,0,0,0.2)"
+                  : "0 0 8px rgba(129,140,248,0.6)",
+                willChange: "left",
+              }}
+            />
+          </button>
+        </div>
+
+        {/* Logout */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors border border-transparent hover:border-rose-500/10 select-none"
+          className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-500/10 hover:text-rose-400 transition-all duration-200 border border-transparent hover:border-rose-500/10 select-none"
+          style={{ color: "var(--text-muted)" }}
         >
           <LogOut className="h-5 w-5 shrink-0" />
           <span>Logout</span>
